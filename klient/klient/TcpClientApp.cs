@@ -300,10 +300,11 @@ namespace klient
                             else if (result == DialogResult.Yes)
                             {
                                 
-                                info("Zgodizles sie na szyfrowany czat");
-                                string answermsg = $"{adresat} zgodzil sie na czat szyfrowany";
                                 string action = "cancelEncryptedChatRequest";
-                                MessagePort answer = new MessagePort(adresat, answermsg, ktoNapisal, action);
+                                int liczba = PrimeNumberGenerator.generate(10000);
+                                info($"Zgodizles sie na szyfrowany czat, wysylasz liczbe pierwsza: {liczba}");
+                                string answermsg = $"{adresat} zgodzil sie na czat szyfrowany, otrzymana liczba pierwsza: {liczba}";
+                                MessagePort answer = new MessagePort(adresat, answermsg, ktoNapisal, action, liczba);
                                 innerSendMessage(answer);
                             }
                         }

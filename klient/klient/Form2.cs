@@ -98,10 +98,10 @@ namespace klient
         // request crypted chat
         private void button3_Click(object sender, EventArgs e)
         {
-            string message = $"{nick}: Wyslales uzytkownikowi {adresat} prosbe o rozpoczecie szyfrowanego czatu";
             string action = "requestEncryptedChat";
             int range = 10000; // 1 - 10 000 z tego range bedzie wybierana liczba pierwsza \
             int generated_prime_number = PrimeNumberGenerator.generate(range);
+            string message = $"{nick}: Wyslales uzytkownikowi {adresat} prosbe o rozpoczecie szyfrowanego czatu, liczba {generated_prime_number}";
             MessagePort messagePort = new MessagePort(nick, message, adresat, action, generated_prime_number);
             app.sendMessage(messagePort);
             

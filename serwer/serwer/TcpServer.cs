@@ -98,12 +98,26 @@ class TcpServer
         }
     }
 
+    private string getHostIPAddress()
+    {
+        string myHost = System.Net.Dns.GetHostName();
+        string myIP = System.Net.Dns.GetHostEntry(myHost).AddressList[0].ToString();
+        return myIP;
+    }
+
+    //private string requestIP()
+    //{
+    //    string serverIP = Request.ServerVariables["LOCAL_ADDR"];
+    //    return 
+    //}
 
     public void StartServer()
     {
         TcpListener listener = new TcpListener(IPAddress.Any, 5000);
         listener.Start();
 
+        string ipserver = getHostIPAddress();
+        info($"Adres IP Serwera {ipserver}");
         info("Serwer nasłuchuje na porcie 5000...");
 
         while (true)
@@ -287,6 +301,8 @@ class ClientHandler
             return true;
         return false;
     }
+
+
 
 }
 
