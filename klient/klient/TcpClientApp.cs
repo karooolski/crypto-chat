@@ -44,6 +44,7 @@ namespace klient
         public string message { get; set; }
         public string adresat { get; set; }
         public string kto_przesyla { get; set; }
+        public string action { get; set; }
 
         public MessagePort() { }
 
@@ -52,6 +53,14 @@ namespace klient
             message = message0;
             adresat = adresat0;
             kto_przesyla = kto;
+            action = "message";
+        }
+        public MessagePort(string kto, string message0, string adresat0, string action0)
+        {
+            message = message0;
+            adresat = adresat0;
+            kto_przesyla = kto;
+            action = action0;
         }
     }
 
@@ -66,6 +75,8 @@ namespace klient
         bool connected = false;
         string clientName;
         string ip;
+        public static bool StopTheClient = false;
+        Thread receiveThread = null; 
 
         public TcpClientApp(string clientName, string ip, int portAddr, ref RichTextBox textboxAddr)
         {
@@ -79,21 +90,26 @@ namespace klient
            main();
         }
 
+        public void stopTheTread()
+        {
+            StopTheClient = true;
+        }
+
         public static void info(string message)
         {
             if (textbox != null)
             {
-                //textbox.Text += "[TcpServer] " + message + "\n";
-                string fullMessage = "[TcpClientApp] " + message + "\n";
                 try
                 {
+                    //textbox.Text += "[TcpServer] " + message + "\n";
+                    string fullMessage = "[TcpClientApp] " + message + "\n";
                     textbox.Invoke(new Action(delegate ()
                     {
                         textbox.AppendText(Convert.ToString(fullMessage));
                     }));
                 } catch (Exception e)
                 {
-                    
+                    return; 
                 }
                 
             }
@@ -105,6 +121,7 @@ namespace klient
             info(m);
         }
 
+        // wyswietlanie w texboxie error messegow 
         public static void sendTxErrorMessage(string message)
         {
             string m = "[ERROR] [TcpClientApp]" + message + "\n";
@@ -126,9 +143,6 @@ namespace klient
             } 
 
             System.Net.IPAddress address = System.Net.IPAddress.Parse("127.0.0.1");
-
-            ///Console.Write("Podaj swoją nazwę: ");
-            //string clientName = Console.ReadLine();
 
             TcpClient client = new TcpClient();
 
@@ -154,7 +168,7 @@ namespace klient
             byte[] nameData = Encoding.ASCII.GetBytes(clientName);
             stream.Write(nameData, 0, nameData.Length);
 
-            Thread receiveThread = new Thread(() => ReceiveMessages(stream));
+            receiveThread = new Thread(() => ReceiveMessages(stream));
             receiveThread.Start();
 
             //while (true)
@@ -165,18 +179,19 @@ namespace klient
             //}
         }
 
-        public void sendMessage(string message, string adresat)
+        public void sendMessage(string message, string adresat, string action)
         {
             if (!connected)
             {
                 return;
             }
-            //MessagePort m = new MessagePort(clientName,message, "abdullah");
 
             info($"{clientName}: {message}");
-            MessagePort messagePort = new MessagePort(clientName, message, adresat);
+
+            MessagePort messagePort = new MessagePort(clientName, message, adresat, action);
             string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
             byte[] data = Encoding.ASCII.GetBytes(jsonMessage);
+            
             try
             {
                 gloabalStream.Write(data, 0, data.Length);
@@ -185,8 +200,6 @@ namespace klient
             catch (Exception e) {
                 sendTxErrorMessage($"[2406122113] sendMessage(): nie moge zsapisac nic do globalstream {e}");
             }
-            
-            
         }
 
         private static Task ReceiveMessages(NetworkStream stream)
@@ -194,7 +207,7 @@ namespace klient
             byte[] buffer = new byte[1024];
             StringBuilder messageBuilder = new StringBuilder();
             int bytesRead;
-            MessagePort message = null;
+            MessagePort messagePort = null;
             string adresat = "";
             bool successReceivingData = false;
 
@@ -202,7 +215,7 @@ namespace klient
 
             try
             {
-                while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) != 0)
+                while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) != 0 || !StopTheClient)
                 {
                     string receivedData = Encoding.ASCII.GetString(buffer, 0, bytesRead);
                     messageBuilder.Append(receivedData);
@@ -216,11 +229,27 @@ namespace klient
                     if (startIndex != -1 && endIndex != -1 && startIndex < endIndex)
                     {
                         string jsonMessage = completeMessage.Substring(startIndex + 7, endIndex - startIndex - 7);
-                        message = JsonSerializer.Deserialize<MessagePort>(jsonMessage);
-                        info($"Odebrano od {message.kto_przesyla}: {message.message}");
+                        messagePort = JsonSerializer.Deserialize<MessagePort>(jsonMessage);
+                        
+                        if(messagePort == null)
+                        {
+                            continue; // nie idz dalej w tej iteracji whilea
+                        }
+
+                        // tuaj wyswieltam wiadomosc w kliencie, otrzymana z serwera od innego klienta
+                        //info($"Odebrano od {message.kto_przesyla}: {message.message}");
+                        //info($"odebrana wiadomsc : kto: {messagePort.kto_przesyla}: co: {messagePort.message} akcja: {messagePort.action}");
+                        info($"{messagePort.kto_przesyla}: {messagePort.message}");
+
                         messageBuilder.Remove(0, endIndex + 5); // Usuń przetworzoną wiadomość z bufora
-                        adresat = message.adresat;
+                        adresat = messagePort.adresat;
                         successReceivingData = true;
+                    }
+                    if (klient.StopClient.stopClient) // statyczna zmienna ktora aktywuje sie przy wcisnieciu wylogowywania
+                    {
+                        info("Aborting thread :) ");
+                        Thread.ResetAbort();
+                        break;
                     }
                 }
             } catch (Exception e)

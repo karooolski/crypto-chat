@@ -32,11 +32,12 @@ namespace klient
             richTextBox1.Text += "Uruchamianie klienta\n";
             app = new TcpClientApp(nick, "", 5000, ref richTextBox1);
             messageBox = richTextBox2;
+            StopClient.stopClient = false;
         }
 
         private void Form2_Load(object sender, EventArgs e)
         {
-
+            
         }
 
         private void label1_Click(object sender, EventArgs e)
@@ -56,19 +57,40 @@ namespace klient
 
         private void button1_Click(object sender, EventArgs e)
         {
-            string message = messageBox.ToString();
-            app.sendMessage(message, "abdul");
+            string message = messageBox.Text;
+            
+            if(adresat!= "")
+            {
+                app.sendMessage(message, adresat,"message");
+            }
+            
         }
 
+        // logout 
         private void button2_Click(object sender, EventArgs e)
         {
+            string message = "action";
+            string adresat = "serwer";
+            string action = "logout";
 
+            app.sendMessage(message, adresat, action);
+
+            //app.stopTheTread();
+            //StopClient.stopClient = true;
+            Form form1 = new Form1();
+            form1.Show();
+            Close(); // form2.Close();
         }
 
-        // w ten box wpisujesz goscia z ktorym piszesz 
         private void richTextBox3_TextChanged(object sender, EventArgs e)
         {
-           //adresat = richTextBox3.Text;
+            adresat = richTextBox3.Text;
         }
     }
+
+    public static class StopClient
+    {
+        public static bool stopClient = false;
+    }
+
 }

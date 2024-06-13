@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Security.Cryptography.Pkcs;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -37,6 +38,7 @@ public class MessagePort
     public string message { get; set; }
     public string adresat { get; set; }
     public string kto_przesyla { get; set; }
+    public string action { get; set; }
 
     public MessagePort() { }
 
@@ -45,6 +47,14 @@ public class MessagePort
         message = message0;
         adresat = adresat0;
         kto_przesyla = kto;
+        action = "message";
+    }
+    public MessagePort(string kto, string message0, string adresat0, string action0)
+    {
+        message = message0;
+        adresat = adresat0;
+        kto_przesyla = kto;
+        action = action0;
     }
 }
 
@@ -74,12 +84,12 @@ class TcpServer
         }
     }
 
-    //static void Main(string[] args)
+
     public void StartServer()
     {
         TcpListener listener = new TcpListener(IPAddress.Any, 5000);
         listener.Start();
-        //Console.WriteLine("Serwer nasłuchuje na porcie 5000...");
+
         info("Serwer nasłuchuje na porcie 5000...");
 
         while (true)
@@ -95,30 +105,29 @@ class TcpServer
         }
     }
 
-    public static void BroadcastMessage(MessagePort message, ClientHandler sender)
+    public static void BroadcastMessage(MessagePort messagePort, ClientHandler sender)
     {
-        info("[Serwer : Wchodze do Broadcast Message]");
         lock (lockObject)
         {
-            ClientHandler recipient = clients.Find(c => c.ClientName == message.adresat);
+            ClientHandler recipient = clients.Find(c => c.ClientName == messagePort.adresat);
             if (recipient != null)
             {
-                string jsonMessage = "<START>" + JsonSerializer.Serialize(message) + "<END>";
+                string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
+                //recipient.SendMessage(messagePort.message, recipient.ClientName);
+                recipient.SendMessage(messagePort.kto_przesyla, messagePort.message,messagePort.adresat,messagePort.action);
 
-                recipient.SendMessage(jsonMessage);
-
-                sender.SendMessage("[Serwer] Adresat odebral wiadomosc");
                 // Wysłanie potwierdzenia do nadawcy
                 //sender.SendMessage($"<START>{{\"Message\":\"Serwer odebrał wiadomość\",\"Adresat\":\"{sender.ClientName}\",\"KtoPrzesyla\":\"Server\"}}<END>");
+                //sender.SendBackMessage($"[TcpServer] (potwierdzenie): adresat {recipient.ClientName} == {messagePort.adresat} oderbal wiadomosc");
             }
             else
             {
-                sender.SendMessage("[Serwer] odbiorca byl null");
+                string msg = $"[TcpSerwer] Klient {messagePort.adresat} jest niedostępny";
+                sender.SendMessage(msg,sender.ClientName);
                 //sender.SendMessage($"<START>{{\"Message\":\"Klient '{message.adresat}' nie jest dostępny\",\"Adresat\":\"{sender.ClientName}\",\"KtoPrzesyla\":\"Server\"}}<END>");
             }
         }
     }
-
 
     public static void RemoveClient(ClientHandler clientHandler)
     {
@@ -146,20 +155,27 @@ class ClientHandler
         textbox = tx; 
     }
 
+    // Funckja do wyswietlania lgoow w textboxie serwera
     public static void info(string message)
     {
         if (textbox != null)
         {
-            //textbox.Text += "[TcpServer] " + message + "\n";
-            string fullMessage = "[TcpServer] " + message + "\n";
-            textbox.Invoke(new Action(delegate ()
+            try
             {
-                textbox.AppendText(Convert.ToString(fullMessage));
-            }));
+                string fullMessage = "[TcpServer] " + message + "\n";
+                textbox.Invoke(new Action(delegate ()    // takie cos bo watki kluca sie o textbox 
+                {
+                    textbox.AppendText(Convert.ToString(fullMessage));
+                }));
+            } catch (Exception e)
+            {
+                // nic nie rob // nie mam gdzie pokazac w tym miejscuu tego bledu 
+            }
         }
+
     }
 
-
+    // przechwytywanie wiadomosci 
     public async void Handle()
     {
         byte[] buffer = new byte[1024];
@@ -169,48 +185,51 @@ class ClientHandler
         bytesRead = stream.Read(buffer, 0, buffer.Length);
         clientName = Encoding.ASCII.GetString(buffer, 0, bytesRead).Trim();
         StringBuilder messageBuilder = new StringBuilder();
-        //MessagePort data; 
-        //byte[] bufferRead = stream.Read(buffer, 0, buffer.Length);
-        //data = Serializer.deserializeObject(serializedObject: bufferRead, myClass: typeof(MessagePort));
 
-        //BinaryFormatter formatter = new BinaryFormatter();
-        //MessagePort receivedObject = (MessagePort)await formatter.Deserialize(stream);
-        //info($"odebralem od kogo: {receivedObject.adresat} message: {receivedObject.message} adresat: {receivedObject.adresat}");
-
-        //Console.WriteLine($"{clientName} połączony.");
         info($"{clientName} połączony.");
 
         try
         {
-            while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) != 0)
+            while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) != 0) // ta petla dziala caly czas w trakcie dzialania serwera
             {
+                // serwer odczytuje wiadomosc 
                 string receivedData = Encoding.ASCII.GetString(buffer, 0, bytesRead);
                 messageBuilder.Append(receivedData);
-
                 string completeMessage = messageBuilder.ToString();
-
-                // Sprawdź, czy wiadomość zawiera oba znaczniki
-                int startIndex = completeMessage.IndexOf("<START>");
+                int startIndex = completeMessage.IndexOf("<START>"); // Sprawdź, czy wiadomość zawiera oba znaczniki
                 int endIndex = completeMessage.IndexOf("<END>");
 
                 if (startIndex != -1 && endIndex != -1 && startIndex < endIndex)
                 {
                     string jsonMessage = completeMessage.Substring(startIndex + 7, endIndex - startIndex - 7);
+                    
+                    // deserializacja wiadomosci od uzytkownika na obiekt w ktorym trzymam dane jakie chce
                     MessagePort message = JsonSerializer.Deserialize<MessagePort>(jsonMessage);
-
-                    info($"Odebrano od {clientName}: {jsonMessage}");
-
-                    TcpServer.BroadcastMessage(message, this);
-
-                    // Usuń przetworzoną wiadomość z bufora
-                    messageBuilder.Remove(0, endIndex + 5);
+                    
+                    info($"Odebrano od {clientName}: {jsonMessage}"); // pokazuje w texboxie caly json 
+                    
+                    // akcja serwera wobec wiadomosci
+                    if (message == null)
+                    {
+                        return;
+                    }
+                    if (message.action == "message") // to jest zwykla wiaodmosc od uztykownika
+                    {
+                        TcpServer.BroadcastMessage(message, this); // this czyli ClientHandler, przesyla sam siebie
+                    }
+                    else if (message.action == "logout") // to jest request od uzytkownika 
+                    {
+                        client.Close();
+                        TcpServer.RemoveClient(this);
+                    }
+                    messageBuilder.Remove(0, endIndex + 5); // Usun przetworzona wiadomosc z bufora
                 }
             }
         }
         catch (Exception e)
         {
             //Console.WriteLine($"Błąd: {e.Message}");
-            info($"Błąd: {e.Message}");
+            info($"[2406130311] Błąd: {e.Message}");
         }
         finally
         {
@@ -222,9 +241,25 @@ class ClientHandler
         }
     }
 
-    public void SendMessage(string message)
+    public void SendMessage(string message, string adresat)
     {
-        byte[] data = Encoding.ASCII.GetBytes(message);
+        MessagePort messagePort = new MessagePort(ClientName, message, adresat);
+        string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
+        byte[] data = Encoding.ASCII.GetBytes(jsonMessage);
+        stream.Write(data, 0, data.Length);
+    }
+    public void SendBackMessage(string message)
+    {
+        MessagePort messagePort = new MessagePort("[Serwer]", message, "[z powrotem]");
+        string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
+        byte[] data = Encoding.ASCII.GetBytes(jsonMessage);
+        stream.Write(data, 0, data.Length);
+    }
+    public void SendMessage(string kto_przesyla, string wiaodmosc, string adresat, string akcja)
+    {
+        MessagePort messagePort = new MessagePort(kto_przesyla, wiaodmosc, adresat, akcja);
+        string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
+        byte[] data = Encoding.ASCII.GetBytes(jsonMessage);
         stream.Write(data, 0, data.Length);
     }
 }

@@ -34,5 +34,11 @@ namespace serwer
         {
 
         }
+
+        // Exit 
+        private void button1_Click(object sender, EventArgs e) // https://stackoverflow.com/questions/13046019/winforms-application-exit-vs-environment-exit-vs-form-close
+        {
+            Environment.Exit(0); // wylacza wszyskkie watki itp
+        }
     }
 }

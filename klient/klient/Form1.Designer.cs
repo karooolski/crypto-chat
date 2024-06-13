@@ -30,6 +30,7 @@
         {
             button1 = new System.Windows.Forms.Button();
             richTextBox1 = new System.Windows.Forms.RichTextBox();
+            button2 = new System.Windows.Forms.Button();
             SuspendLayout();
             // 
             // button1
@@ -51,12 +52,23 @@
             richTextBox1.Text = "";
             richTextBox1.TextChanged += richTextBox1_TextChanged;
             // 
+            // button2
+            // 
+            button2.Location = new System.Drawing.Point(624, 199);
+            button2.Name = "button2";
+            button2.Size = new System.Drawing.Size(106, 42);
+            button2.TabIndex = 2;
+            button2.Text = "Quit";
+            button2.UseVisualStyleBackColor = true;
+            button2.Click += button2_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.SystemColors.ActiveCaption;
             ClientSize = new System.Drawing.Size(800, 450);
+            Controls.Add(button2);
             Controls.Add(richTextBox1);
             Controls.Add(button1);
             Name = "Form1";
@@ -69,5 +81,6 @@
 
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.RichTextBox richTextBox1;
+        private System.Windows.Forms.Button button2;
     }
 }

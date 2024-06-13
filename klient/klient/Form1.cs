@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -36,6 +37,12 @@ namespace klient
         private void Form1_Load(object sender, EventArgs e)
         {
 
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            //Application.Exit(); // w tym moemencie w apliakcji nie ma żadnych watkow wiec moge tylko zamknac proces
+            Environment.Exit(0);
         }
     }
 }
