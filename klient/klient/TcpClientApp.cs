@@ -15,6 +15,8 @@ using System.Xml.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Windows.Forms.VisualStyles;
+using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Eventing.Reader;
 
 
 namespace klient
@@ -45,22 +47,36 @@ namespace klient
         public string adresat { get; set; }
         public string kto_przesyla { get; set; }
         public string action { get; set; }
+        public int number { get; set; }
 
         public MessagePort() { }
 
+        // to jest do wysylania wiadomosci strike czat 
         public MessagePort(string kto, string message0, string adresat0)
         {
             message = message0;
             adresat = adresat0;
             kto_przesyla = kto;
             action = "message";
+            number = 0;
         }
+        // to jest do wys wysylania wiadomosci z akcja np. wylogowywanie sie 
         public MessagePort(string kto, string message0, string adresat0, string action0)
         {
             message = message0;
             adresat = adresat0;
             kto_przesyla = kto;
             action = action0;
+            number = 0;
+        }
+        // to jest do diffy hellman wysylanie wiadomosci z liczba  
+        public MessagePort(string kto, string message0, string adresat0, string action0, int number0)
+        {
+            message = message0;
+            adresat = adresat0;
+            kto_przesyla = kto;
+            action = action0;
+            number = number0;
         }
     }
 
@@ -71,7 +87,7 @@ namespace klient
         static RichTextBox textbox = null; 
         string clientIP = "";
         int port = 5000;
-        NetworkStream gloabalStream = null;
+        static NetworkStream gloabalStream = null;
         bool connected = false;
         string clientName;
         string ip;
@@ -179,16 +195,16 @@ namespace klient
             //}
         }
 
-        public void sendMessage(string message, string adresat, string action)
+        public void sendMessage(MessagePort messagePort) // string message, string adresat, string action
         {
             if (!connected)
             {
                 return;
             }
 
-            info($"{clientName}: {message}");
+            info($"{clientName}: {messagePort.message}");
 
-            MessagePort messagePort = new MessagePort(clientName, message, adresat, action);
+            //MessagePort messagePort = new MessagePort(clientName, message, adresat, action);
             string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
             byte[] data = Encoding.ASCII.GetBytes(jsonMessage);
             
@@ -199,6 +215,23 @@ namespace klient
             }
             catch (Exception e) {
                 sendTxErrorMessage($"[2406122113] sendMessage(): nie moge zsapisac nic do globalstream {e}");
+            }
+        }
+
+        // nie moge wywolac sendMessage z poziomu statycznej metody wiec tworze tez statyczna metode do wysylania
+        // chodzi o sytuacje w ktorej klient dostal requesta i od razu sam z siebie odsyla wiadomosc
+        private static void innerSendMessage(MessagePort messagePort)
+        {
+            string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
+            byte[] data = Encoding.ASCII.GetBytes(jsonMessage);
+            try
+            {
+                gloabalStream.Write(data, 0, data.Length);
+                //gloabalStream.Close();
+            }
+            catch (Exception e)
+            {
+                sendTxErrorMessage($"[2406131903] innerSendMessage(): nie moge zsapisac nic do globalstream {e}");
             }
         }
 
@@ -244,6 +277,38 @@ namespace klient
                         messageBuilder.Remove(0, endIndex + 5); // Usuń przetworzoną wiadomość z bufora
                         adresat = messagePort.adresat;
                         successReceivingData = true;
+
+                        if(messagePort.action == "requestEncryptedChat")
+                        {
+                            string ktoNapisal = messagePort.kto_przesyla;
+                            string infos = $"Uzytkownik {ktoNapisal} prosi ciebie o ustanowienia szyfrowanego czatu";
+                            info(infos);
+                            string message = infos;
+                            const string caption = "Form Closing";
+                            var result = MessageBox.Show(message, caption,
+                                                         MessageBoxButtons.YesNo,
+                                                         MessageBoxIcon.Question);
+
+                            if (result == DialogResult.No)
+                            {
+                                info("nie zgodziles sie na szyfrowany czat");
+                                string answermsg = $"{adresat} nie zgodzil sie na czat szyfrowany";
+                                string action = "cancelEncryptedChatRequest";
+                                MessagePort answer = new MessagePort(adresat, answermsg, ktoNapisal, action);
+                                innerSendMessage(answer);
+                            }
+                            else if (result == DialogResult.Yes)
+                            {
+                                
+                                info("Zgodizles sie na szyfrowany czat");
+                                string answermsg = $"{adresat} zgodzil sie na czat szyfrowany";
+                                string action = "cancelEncryptedChatRequest";
+                                MessagePort answer = new MessagePort(adresat, answermsg, ktoNapisal, action);
+                                innerSendMessage(answer);
+                            }
+                        }
+                        
+
                     }
                     if (klient.StopClient.stopClient) // statyczna zmienna ktora aktywuje sie przy wcisnieciu wylogowywania
                     {

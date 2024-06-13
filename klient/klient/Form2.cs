@@ -17,7 +17,7 @@ namespace klient
         TcpClientApp app;
 
         string nick = "";
-        string adresat = ""; 
+        string adresat = "";
 
         public Form2()
         {
@@ -37,7 +37,7 @@ namespace klient
 
         private void Form2_Load(object sender, EventArgs e)
         {
-            
+
         }
 
         private void label1_Click(object sender, EventArgs e)
@@ -58,12 +58,13 @@ namespace klient
         private void button1_Click(object sender, EventArgs e)
         {
             string message = messageBox.Text;
-            
-            if(adresat!= "")
+            MessagePort messagePort = new MessagePort(message, adresat, "message");
+
+            if (adresat != "")
             {
-                app.sendMessage(message, adresat,"message");
+                app.sendMessage(messagePort);
             }
-            
+
         }
 
         // logout 
@@ -73,7 +74,9 @@ namespace klient
             string adresat = "serwer";
             string action = "logout";
 
-            app.sendMessage(message, adresat, action);
+            MessagePort messagePort = new MessagePort(nick, message, adresat, action);
+
+            app.sendMessage(messagePort);
 
             //app.stopTheTread();
             //StopClient.stopClient = true;
@@ -85,6 +88,23 @@ namespace klient
         private void richTextBox3_TextChanged(object sender, EventArgs e)
         {
             adresat = richTextBox3.Text;
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        // request crypted chat
+        private void button3_Click(object sender, EventArgs e)
+        {
+            string message = $"{nick}: Wyslales uzytkownikowi {adresat} prosbe o rozpoczecie szyfrowanego czatu";
+            string action = "requestEncryptedChat";
+            int range = 10000; // 1 - 10 000 z tego range bedzie wybierana liczba pierwsza \
+            int generated_prime_number = PrimeNumberGenerator.generate(range);
+            MessagePort messagePort = new MessagePort(nick, message, adresat, action, generated_prime_number);
+            app.sendMessage(messagePort);
+            
         }
     }
 

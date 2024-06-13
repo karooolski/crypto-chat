@@ -36,6 +36,8 @@
             richTextBox4 = new System.Windows.Forms.RichTextBox();
             richTextBox5 = new System.Windows.Forms.RichTextBox();
             button2 = new System.Windows.Forms.Button();
+            label2 = new System.Windows.Forms.Label();
+            button3 = new System.Windows.Forms.Button();
             SuspendLayout();
             // 
             // label1
@@ -91,7 +93,7 @@
             // richTextBox4
             // 
             richTextBox4.BackColor = System.Drawing.SystemColors.GradientActiveCaption;
-            richTextBox4.Location = new System.Drawing.Point(91, 367);
+            richTextBox4.Location = new System.Drawing.Point(643, 326);
             richTextBox4.Name = "richTextBox4";
             richTextBox4.Size = new System.Drawing.Size(146, 30);
             richTextBox4.TabIndex = 5;
@@ -100,7 +102,7 @@
             // richTextBox5
             // 
             richTextBox5.BackColor = System.Drawing.SystemColors.GradientActiveCaption;
-            richTextBox5.Location = new System.Drawing.Point(91, 408);
+            richTextBox5.Location = new System.Drawing.Point(643, 362);
             richTextBox5.Name = "richTextBox5";
             richTextBox5.Size = new System.Drawing.Size(146, 30);
             richTextBox5.TabIndex = 6;
@@ -116,12 +118,34 @@
             button2.UseVisualStyleBackColor = true;
             button2.Click += button2_Click;
             // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new System.Drawing.Point(32, 326);
+            label2.Name = "label2";
+            label2.Size = new System.Drawing.Size(38, 15);
+            label2.TabIndex = 8;
+            label2.Text = "label2";
+            label2.Click += label2_Click;
+            // 
+            // button3
+            // 
+            button3.Location = new System.Drawing.Point(102, 362);
+            button3.Name = "button3";
+            button3.Size = new System.Drawing.Size(122, 44);
+            button3.TabIndex = 9;
+            button3.Text = "request crypted chat";
+            button3.UseVisualStyleBackColor = true;
+            button3.Click += button3_Click;
+            // 
             // Form2
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.SystemColors.ActiveBorder;
             ClientSize = new System.Drawing.Size(800, 450);
+            Controls.Add(button3);
+            Controls.Add(label2);
             Controls.Add(button2);
             Controls.Add(richTextBox5);
             Controls.Add(richTextBox4);
@@ -147,5 +171,7 @@
         private System.Windows.Forms.RichTextBox richTextBox4;
         private System.Windows.Forms.RichTextBox richTextBox5;
         private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Button button3;
     }
 }

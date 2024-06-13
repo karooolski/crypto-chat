@@ -39,22 +39,36 @@ public class MessagePort
     public string adresat { get; set; }
     public string kto_przesyla { get; set; }
     public string action { get; set; }
+    public int number { get; set; }
 
     public MessagePort() { }
 
+    // to jest do wysylania wiadomosci strike czat 
     public MessagePort(string kto, string message0, string adresat0)
     {
         message = message0;
         adresat = adresat0;
         kto_przesyla = kto;
         action = "message";
+        number = 0;
     }
+    // to jest do wys wysylania wiadomosci z akcja np. wylogowywanie sie 
     public MessagePort(string kto, string message0, string adresat0, string action0)
     {
         message = message0;
         adresat = adresat0;
         kto_przesyla = kto;
         action = action0;
+        number = 0;
+    }
+    // to jest do diffy hellman wysylanie wiadomosci z liczba  
+    public MessagePort(string kto, string message0, string adresat0, string action0, int number0)
+    {
+        message = message0;
+        adresat = adresat0;
+        kto_przesyla = kto;
+        action = action0;
+        number = number0;
     }
 }
 
@@ -213,7 +227,7 @@ class ClientHandler
                     {
                         return;
                     }
-                    if (message.action == "message") // to jest zwykla wiaodmosc od uztykownika
+                    if (actionBetweenUsers(message.action)) // to jest zwykla wiaodmosc od uztykownika lub akcja jednego uzytkownika wobec drugiego
                     {
                         TcpServer.BroadcastMessage(message, this); // this czyli ClientHandler, przesyla sam siebie
                     }
@@ -262,4 +276,18 @@ class ClientHandler
         byte[] data = Encoding.ASCII.GetBytes(jsonMessage);
         stream.Write(data, 0, data.Length);
     }
+
+
+    // dozwolone akcje ktore sa przesylane miedzy klientami np. miedzy klientem a, do klienta b, akcja ktora jest jako action nie dotyczy serwera
+    // a drugiego uzytkownika do ktorego wysylana jest wiadomosc
+    // np. uzytkonik a prosi uzytkownika b o ustanowienie prywatengo czatu
+    private bool actionBetweenUsers(string action)
+    {
+        if(action == "message" || action == "requestEncryptedChat" || action == "cancelEncryptedChatRequest")
+            return true;
+        return false;
+    }
+
 }
+
+// allowedMessageActionsAsMessages
