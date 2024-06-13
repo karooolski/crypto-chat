@@ -1,6 +1,13 @@
 # Prerequisites
 *.d
 
+klient/.vs
+serwer/.vs
+klient/klient/bin
+serwer/serwer/bin
+klient/klient/obj
+serwer/serwer/obj
+
 # Compiled Object files
 *.slo
 *.lo
