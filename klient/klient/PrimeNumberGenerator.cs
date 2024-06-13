@@ -2,6 +2,7 @@
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -22,7 +23,7 @@ namespace klient
             {
                 randomVal = rnd.Next(1, range);
             }
-            return randomVal;
+            return (int)randomVal;
         }
 
         // Checks whether the provided number is a prime number.

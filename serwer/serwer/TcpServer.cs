@@ -297,8 +297,20 @@ class ClientHandler
     // np. uzytkonik a prosi uzytkownika b o ustanowienie prywatengo czatu
     private bool actionBetweenUsers(string action)
     {
-        if(action == "message" || action == "requestEncryptedChat" || action == "cancelEncryptedChatRequest")
-            return true;
+        string [] actions = { "message", "requestEncryptedChat" , "cancelEncryptedChatRequest", "acceptEncryptedChatRequest", "ShareAB"
+
+        };
+
+        foreach (string obj in actions)
+        {
+            if (obj == action)
+            {
+                return true;
+            }
+        }
+//
+   //     if(action == "message" || action == "requestEncryptedChat" || action == "cancelEncryptedChatRequest")
+           // return true;
         return false;
     }
 

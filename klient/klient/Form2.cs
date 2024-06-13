@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -58,7 +59,7 @@ namespace klient
         private void button1_Click(object sender, EventArgs e)
         {
             string message = messageBox.Text;
-            MessagePort messagePort = new MessagePort(message, adresat, "message");
+            MessagePort messagePort = new MessagePort(nick, message, adresat);
 
             if (adresat != "")
             {
