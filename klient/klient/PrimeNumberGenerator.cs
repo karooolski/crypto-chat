@@ -15,19 +15,19 @@ namespace klient
 
         }
 
-        public static int generate(int range)
+        public static BigInteger generate(BigInteger range)
         {
             Random rnd = new Random();
-            int randomVal = rnd.Next(2, range);
+            BigInteger randomVal = rnd.Next(2, (int)range);
             while (!isPrime(randomVal))
             {
-                randomVal = rnd.Next(1, range);
+                randomVal = rnd.Next(1, (int)range);
             }
-            return (int)randomVal;
+            return (BigInteger)randomVal;
         }
 
         // Checks whether the provided number is a prime number.
-        public static bool isPrime(int num)
+        public static bool isPrime(BigInteger num)
         {
             if (num <= 1)
                 return false; // 1 or less is never prime.
@@ -35,8 +35,8 @@ namespace klient
                 return true; // 2 is always a prime number.
 
             // Trial Division: Tries to divide the number with all numbers in the range 2 to square root of the number.
-            var boundary = (int)Math.Floor(Math.Sqrt(num));
-            for (int i = 2; i <= boundary; i++)
+            var boundary = (BigInteger)Math.Floor(Math.Sqrt((int)num));
+            for (BigInteger i = 2; i <= boundary; i++)
             {
                 if (num % i == 0)
                     return false;

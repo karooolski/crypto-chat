@@ -100,10 +100,12 @@ namespace klient
         private void button3_Click(object sender, EventArgs e)
         {
             string action = "requestEncryptedChat";
-            int range = 10000; // 1 - 10 000 z tego range bedzie wybierana liczba pierwsza \
-            int generated_prime_number = PrimeNumberGenerator.generate(range);
-            string message = $"{nick}: Wyslales uzytkownikowi {adresat} prosbe o rozpoczecie szyfrowanego czatu, liczba {generated_prime_number}";
-            MessagePort messagePort = new MessagePort(nick, message, adresat, action, generated_prime_number);
+            int range = 100; // 1 - 10 000 z tego range bedzie wybierana liczba pierwsza \
+            BigInteger generated_prime_number = PrimeNumberGenerator.generate(range);
+            string prime_number_str = generated_prime_number.ToString();
+            string message = $"{nick}: Wyslales uzytkownikowi {adresat} prosbe o rozpoczecie szyfrowanego czatu, liczba {generated_prime_number}, jako string {prime_number_str}";
+           
+            MessagePort messagePort = new MessagePort(nick, message, adresat, action, prime_number_str);
             app.sendMessage(messagePort);
             
         }

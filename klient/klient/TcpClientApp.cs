@@ -43,134 +43,8 @@ namespace klient
         }
     }
 
-    public class MessagePort
-    {
-        public string message { get; set; }
-        public string adresat { get; set; }
-        public string kto_przesyla { get; set; }
-        public string action { get; set; }
-        public int number { get; set; }
+   
 
-        public MessagePort() { }
-
-        // to jest do wysylania wiadomosci strike czat 
-        public MessagePort(string kto, string message0, string adresat0)
-        {
-            message = message0;
-            adresat = adresat0;
-            kto_przesyla = kto;
-            action = "message";
-            number = 0;
-        }
-        // to jest do wys wysylania wiadomosci z akcja np. wylogowywanie sie 
-        public MessagePort(string kto, string message0, string adresat0, string action0)
-        {
-            message = message0;
-            adresat = adresat0;
-            kto_przesyla = kto;
-            action = action0;
-            number = 0;
-        }
-        // to jest do diffy hellman wysylanie wiadomosci z liczba  
-        public MessagePort(string kto, string message0, string adresat0, string action0, int number0)
-        {
-            message = message0;
-            adresat = adresat0;
-            kto_przesyla = kto;
-            action = action0;
-            number = number0;
-        }
-    }
-
-    class DiffieHellmanData
-    {
-        int p = 0; // wspolna liczba pierwsza == prime number, ustalana miedzy klientami ale u mnie jeden klient ustala a drugi sie zgadza na to
-        int g = 0; // podsatwa, prymitywny pierwiastek pierwotny modulo p
-        int ab = 0; // losowa liczna calkowita klient1 ma a, klient2 ma b, ale w implementracji klienta to jedna zmienna , gdzie 1 < ab < p-1
-        int AB = 0; // klucz pibliczny, g^ab, albo inaczej klient1 A = g^a klient2 B = g^b, ale skoro 1 skrypt to obsluguje to robie AB
-        int ABclient2 = 0; // klucz publiczny otrzymuwany od drugiego klienta
-        int K = 0;  // wspolny tajny klucz K = ABklient2^ab mod p
-
-        private bool allowCalculate_g = false;
-        private bool allowCalculate_ab = false;
-        private bool allowCalculateAB = false;
-        private static bool allowShareAB = false;
-        private bool allowCalculateK = false;
-
-        public int getAB()
-        {
-            return AB; 
-        }
-        public int get_g()
-        {
-            return g;
-        }
-        public int getK()
-        {
-            return K;
-        }
-        public DiffieHellmanData() { 
-        
-        }
-
-        public void setPrimeNumber_p(int p0)
-        {
-            p = p0;
-            allowCalculate_g = true;
-            calculateg(); // podczas ustawiania p moge sobie policzyc wszystko co moge na teraz policzyc przed wysylaniem wiadomosci 
-        }
-        public void calculateg()
-        {
-            if (allowCalculate_g)
-            {
-                g = PrimitiveRoot.FindPrimitiveRoot(p);
-                allowCalculate_ab = true;
-                calculateab();
-            }          
-        }
-        public void calculateab() // 1 < ab < p-1
-        {
-            if (allowCalculate_ab)
-            {
-                Random rnd = new Random();
-                int j = 1;
-                int range = p - 1;
-                int rangeint = int.Parse($"{range}");
-                ab = (int) rnd.Next(2, rangeint);
-                allowCalculateAB = true;
-                calculateAB();
-            }
-        }
-        public void calculateAB()
-        {
-            if (allowCalculateAB)
-            {
-                AB = SelfPower.Power(ab, g);
-                allowShareAB = true;
-            }
-        }
-        public static void shareAB(MessagePort data)
-        {
-            if (allowShareAB)
-            {
-                TcpClientApp.innerSendMessage(data);
-            }
-        }
-        public void setABclient2(int ABkolegi)
-        {
-            ABclient2 = ABkolegi;
-            allowCalculateK = true;
-        }
-        public void calculateK()
-        {
-            if (allowCalculateK && allowCalculate_g && allowCalculateAB) // te 2 zmienne na koncu sa ustawiane jak sie wylicza p i ab 
-            {
-                // K = ABklient2 ^ ab mod p
-                int czlon1 = SelfPower.Power(ABclient2, ab);
-                K = czlon1 % p;  
-            }
-        }
-    }
     /*
      W moim programie to wyglada tak
     Alice -> (robi request Encypted chat + wyznacza s) -> Serwer -> Bob
@@ -365,9 +239,13 @@ namespace klient
                         string jsonMessage = completeMessage.Substring(startIndex + 7, endIndex - startIndex - 7);
                         messagePort = JsonSerializer.Deserialize<MessagePort>(jsonMessage);
 
+                        info($"Odebralem: {jsonMessage}");
+
                         string ktoNapisal = messagePort.kto_przesyla;
                         adresat = messagePort.adresat;
-                        int number = messagePort.number;
+                        string numberstr = messagePort.getNumber();
+                        BigInteger number = BigInteger.Parse(numberstr);
+                        info($"i jak wyciagam liczbe to number mam taki {number} a w string jest {numberstr}");
                         string message = messagePort.message;
                         string action = messagePort.action;
 
@@ -388,7 +266,7 @@ namespace klient
 
                         if(messagePort.action == "requestEncryptedChat")
                         {
-                            
+                            info($"(requestEncryptedChat) Odebralem: {jsonMessage}");
                             string infos = $"Uzytkownik {ktoNapisal} prosi ciebie o ustanowienia szyfrowanego czatu";
                             info(infos);
                             string message0 = infos;
@@ -407,48 +285,120 @@ namespace klient
                             }
                             else if (result == DialogResult.Yes)
                             {
+                                // klient2 
+
+                                info($"Zgodizles sie na szyfrowany czat, wysylasz liczbe pierwsza: {number}");
                                 //int liczba = PrimeNumberGenerator.generate(10000);
-                                diffieData.setPrimeNumber_p(number); // klient2 ustawia sobie liczbe pierwsza od klienta1 == uzgodnili 
+                                //diffieData.setPrimeNumber_p(number); // klient2 ustawia sobie liczbe pierwsza od klienta1 == uzgodnili 
                                 // w tym miejscu sa obliczane tez inne zmienne potrzebne do tej metody 
-                                
+
+                                string klient = messagePort.adresat;
+                                // klient2 potwierdza ze chhce szyufrowany czat i odeslal, liczbe pierwsza 
+                                //BigInteger liczba = messagePort.getNumber();
+
+                                if(number == 0)
+                                {
+                                    info($"{klient}: Cos poszlo nie tak, liczba jaka zem otrzymal to 0");
+                                    continue;
+                                }
+
+                                diffieData.setPrimeNumber_p(number); // klient2 ustawia sobie liczbe pierwsza i robi reszte obliczen
+                                info($"{klient} ustawiam liczbe pierwsza p = {number}");
+
+                                diffieData.calculateg();
+                                info($"{klient} uzgadniam podstawe g = {diffieData.g}");
+
+                                diffieData.calculateab();
+                                info($"{klient} wybieram tajna liczbe ab = {diffieData.ab}");
+
+                                diffieData.calculateAB();
+                                info($"{klient} obliczam klucz publiczny AB=g^ab mod p -->  AB = {diffieData.AB}");
+
+
                                 //int liczba = PrimitiveRoot.FindPrimitiveRoot(number); // klient2 wylicza podstawe g i przesyla ja do klienta1 
                                 string newAction = "acceptEncryptedChatRequest";
-                                info($"Zgodizles sie na szyfrowany czat, wysylasz liczbe pierwsza: {number}");
                                 string answermsg = $"{adresat} zgodzil sie na czat szyfrowany, wyliczona podstawa g: {number}";
-                                MessagePort answer = new MessagePort(adresat, answermsg, ktoNapisal, newAction, number); // odsylanie zpowrotem do ktoNapisal
+                                string number_str = number.ToString();
+                                MessagePort answer = new MessagePort(adresat, answermsg, ktoNapisal, newAction, number_str); // odsylanie liczby pierwszej zpowrotem do ktoNapisal: klien1
                                 innerSendMessage(answer);
 
-                                // moge juz tez obliczyc i wyslac od razu obliczony klucz publiczny
-                                int ABliczba = diffieData.getAB();
-                                answermsg = $"{adresat} przesylam tez AB: {ABliczba}";
-                                newAction = "ShareAB";
-                                MessagePort shareAB = new MessagePort(adresat, answermsg, ktoNapisal, newAction, ABliczba);
-                                innerSendMessage(shareAB);
+                                
 
                             }
                         }
                         else if(messagePort.action == "acceptEncryptedChatRequest") // tutaj klient1 otrzymal od klienta2 potiwerdzenie
                         {
-                            // klient2 potwierdza ze chhce szyufrowany czat i odeslal, liczbe pierwsza 
-                            int liczba = messagePort.number;
+                            // klient1 
+
+                            string klient = messagePort.adresat; 
+
+                            string liczba_str = messagePort.getNumber(); // klient2 potiwerdzil ze chhce szyufrowany czat i odeslal liczbe pierwsza 
+                            BigInteger liczba = BigInteger.Parse(liczba_str);
+
                             diffieData.setPrimeNumber_p(liczba); // klient1 ustawia sobie liczbe pierwsza i robi reszte obliczen
-                            int ABliczba = diffieData.getAB();
+                            info($"{klient} ustawiam liczbe pierwsza p = {liczba}");
+                            
+                            diffieData.calculateg();
+                            info($"{klient} uzgadniam podstawe g = {diffieData.g}");
+                            
+                            diffieData.calculateab();
+                            info($"{klient} wybieram tajna liczbe ab = {diffieData.ab}");
+
+                            diffieData.calculateAB();
+                            info($"{klient} obliczam klucz publiczny AB=g^ab mod p -->  AB = {diffieData.AB}");
+
+                            BigInteger ABliczba = diffieData.AB;
+                            string ABliczbastr = ABliczba.ToString();
                             string newAction = "ShareAB";
-                            string answermsg = $"{adresat} Przesylam AB: {ABliczba}";
-                            MessagePort shareAB = new MessagePort(adresat, answermsg, ktoNapisal, newAction, liczba);
+                            string answermsg = $"{adresat} Wysylam klucz publiczny AB: {ABliczba} do {ktoNapisal}";
+                            MessagePort shareAB = new MessagePort(adresat, answermsg, ktoNapisal, newAction, ABliczbastr);
                             innerSendMessage(shareAB);
                         }
                         else if (messagePort.action == "ShareAB") // tutaj klien1 otrzymuje klucz publiczny AB od klienta2 
                         {
-                            // w tych linijkach znajdzie sie zarowno klient1 i klient2, gdy sie wymieniaja kluczem publicznym
-                            int ABkolegi = messagePort.number;
+                            // klient 2, otrzymal klucz publiczny od klienta 1
+
+                            string ABkolegi_str = messagePort.getNumber();
+                            BigInteger ABkolegi = BigInteger.Parse(ABkolegi_str);
                             diffieData.setABclient2(ABkolegi);
                             diffieData.calculateK();
+                            BigInteger K = diffieData.getK();
+
                             string klient = messagePort.adresat; // adkutalny klient to adresat messega jaki otrzymal
-                            int K = diffieData.getK();
+                            info($"{klient}: Moj klucz prywatny to {K}");
+
+
+                            string answermsg = $"{adresat} Teraz ja Wysylam swoj klucz publiczny AB: {diffieData.AB}";
+                            string newAction = "ShareAB_2";
+                            string liczba_str = diffieData.AB.ToString(); ;
+
+                            MessagePort shareAB_2 = new MessagePort(adresat, answermsg, ktoNapisal, newAction, liczba_str);
+                            innerSendMessage(shareAB_2); // klient2 wysyla swoj klucz publiczny do klienta1 
+
+
+                        }
+                        else if (messagePort.action == "ShareAB_2")
+                        {
+                            // klient1, po tym jak otrzymal klucz publiczny od klient2,  
+
+                            string klient = messagePort.adresat; // tutaj wiadomosc z kluczem publicznym klienta2 idzie do klienta1 
+                            string ABkolegi_str = messagePort.getNumber();
+                            BigInteger ABkolegi = BigInteger.Parse(ABkolegi_str);
+                            diffieData.setABclient2(ABkolegi);
+                            diffieData.calculateK();
+                            BigInteger K = diffieData.getK();
                             info($"{klient}: Moj klucz prywatny to {K}");
                         }
-
+                        //else if(messagePort.action == "sendPublicKey")
+                        //{
+                        //    // moge juz tez obliczyc i wyslac od razu obliczony klucz publiczny
+                        //    BigInteger ABliczba = diffieData.AB;
+                        //    string ABliczba_str = ABliczba.ToString();
+                        //    answermsg = $"{adresat} przesylam tez AB: {ABliczba}";
+                        //    newAction = "ShareAB";
+                        //    MessagePort shareAB = new MessagePort(adresat, answermsg, ktoNapisal, newAction, ABliczba_str);
+                        //    innerSendMessage(shareAB);
+                        //}
 
 
                     }

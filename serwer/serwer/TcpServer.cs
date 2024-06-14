@@ -1,7 +1,9 @@
-﻿using System;
+﻿using serwer;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Numerics;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography.Pkcs;
 using System.Text;
@@ -33,44 +35,7 @@ public class Serializer
 }
 
 
-public class MessagePort
-{
-    public string message { get; set; }
-    public string adresat { get; set; }
-    public string kto_przesyla { get; set; }
-    public string action { get; set; }
-    public int number { get; set; }
 
-    public MessagePort() { }
-
-    // to jest do wysylania wiadomosci strike czat 
-    public MessagePort(string kto, string message0, string adresat0)
-    {
-        message = message0;
-        adresat = adresat0;
-        kto_przesyla = kto;
-        action = "message";
-        number = 0;
-    }
-    // to jest do wys wysylania wiadomosci z akcja np. wylogowywanie sie 
-    public MessagePort(string kto, string message0, string adresat0, string action0)
-    {
-        message = message0;
-        adresat = adresat0;
-        kto_przesyla = kto;
-        action = action0;
-        number = 0;
-    }
-    // to jest do diffy hellman wysylanie wiadomosci z liczba  
-    public MessagePort(string kto, string message0, string adresat0, string action0, int number0)
-    {
-        message = message0;
-        adresat = adresat0;
-        kto_przesyla = kto;
-        action = action0;
-        number = number0;
-    }
-}
 
 class TcpServer
 {
@@ -140,9 +105,10 @@ class TcpServer
             ClientHandler recipient = clients.Find(c => c.ClientName == messagePort.adresat);
             if (recipient != null)
             {
-                string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
+                //string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
                 //recipient.SendMessage(messagePort.message, recipient.ClientName);
-                recipient.SendMessage(messagePort.kto_przesyla, messagePort.message,messagePort.adresat,messagePort.action);
+                //recipient.SendMessage(messagePort.kto_przesyla, messagePort.message,messagePort.adresat,messagePort.action);
+                recipient.SendMessage(messagePort);
 
                 // Wysłanie potwierdzenia do nadawcy
                 //sender.SendMessage($"<START>{{\"Message\":\"Serwer odebrał wiadomość\",\"Adresat\":\"{sender.ClientName}\",\"KtoPrzesyla\":\"Server\"}}<END>");
@@ -290,6 +256,12 @@ class ClientHandler
         byte[] data = Encoding.ASCII.GetBytes(jsonMessage);
         stream.Write(data, 0, data.Length);
     }
+    public void SendMessage(MessagePort messagePort)
+    {
+        string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
+        byte[] data = Encoding.ASCII.GetBytes(jsonMessage);
+        stream.Write(data, 0, data.Length);
+    }
 
 
     // dozwolone akcje ktore sa przesylane miedzy klientami np. miedzy klientem a, do klienta b, akcja ktora jest jako action nie dotyczy serwera
@@ -297,7 +269,7 @@ class ClientHandler
     // np. uzytkonik a prosi uzytkownika b o ustanowienie prywatengo czatu
     private bool actionBetweenUsers(string action)
     {
-        string [] actions = { "message", "requestEncryptedChat" , "cancelEncryptedChatRequest", "acceptEncryptedChatRequest", "ShareAB"
+        string [] actions = { "message", "requestEncryptedChat" , "cancelEncryptedChatRequest", "acceptEncryptedChatRequest", "ShareAB", "ShareAB_2"
 
         };
 

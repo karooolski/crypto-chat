@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 namespace klient
 {
     public class SelfPower {
-        public static int Power(int a, int n)
+        public static BigInteger Power(BigInteger a, BigInteger n)
         {
-            int result = 1;
+            BigInteger result = 1;
 
             while (n > 0)
             {

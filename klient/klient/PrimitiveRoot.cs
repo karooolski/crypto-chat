@@ -21,15 +21,15 @@ namespace klient
     {
         //static void Main7()
         //{
-        //    int p = 17;
-        //    int g = FindPrimitiveRoot(p);
+        //    BigInteger p = 17;
+        //    BigInteger g = FindPrimitiveRoot(p);
 
         //    Console.WriteLine($"Primitive root modulo {p} is: {g}");
         //}
 
-        public static int FindPrimitiveRoot(int p)
+        public static BigInteger FindPrimitiveRoot(BigInteger p)
         {
-            for (int g = 2; g < p; g++)
+            for (BigInteger g = 2; g < p; g++)
             {
                 if (IsPrimitiveRoot(g, p))
                 {
@@ -39,12 +39,12 @@ namespace klient
             return 5; // No primitive root found -1 bylo 
         }
 
-        static bool IsPrimitiveRoot(int g, int p)
+        static bool IsPrimitiveRoot(BigInteger g, BigInteger p)
         {
-            HashSet<int> seen = new HashSet<int>();
-            for (int i = 1; i < p; i++)
+            HashSet<BigInteger> seen = new HashSet<BigInteger>();
+            for (BigInteger i = 1; i < p; i++)
             {
-                int modExp = ModuloExponentiation(g, i, p);
+                BigInteger modExp = ModuloExponentiation(g, i, p);
                 if (seen.Contains(modExp))
                 {
                     return false;
@@ -54,9 +54,9 @@ namespace klient
             return true;
         }
 
-        static int ModuloExponentiation(int baseValue, int exponent, int modulus)
+        static BigInteger ModuloExponentiation(BigInteger baseValue, BigInteger exponent, BigInteger modulus)
         {
-            int result = 1;
+            BigInteger result = 1;
             baseValue = baseValue % modulus;
             while (exponent > 0)
             {
