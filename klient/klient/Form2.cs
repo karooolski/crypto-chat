@@ -58,13 +58,44 @@ namespace klient
 
         private void button1_Click(object sender, EventArgs e)
         {
-            string message = messageBox.Text;
-            MessagePort messagePort = new MessagePort(nick, message, adresat);
+            string plainText = messageBox.Text;
 
-            if (adresat != "")
+            
+
+            if (adresat == "")
             {
-                app.sendMessage(messagePort);
+                return;
             }
+
+            DiffieHellmanData diffieHellman = TcpClientApp.getMyDataAbout(adresat);
+
+            if (diffieHellman == null)
+            {
+                MessagePort newMessage = new MessagePort(nick, plainText, adresat);
+                app.sendMessage(newMessage);
+            }
+            if (diffieHellman != null)
+            {
+                if (diffieHellman.allowEncryptedChat)
+                {
+                    string key = diffieHellman.getK().ToString(); ;
+                    string ecnrypted = AES.Encrypt(plainText, key);
+                    MessagePort newMessage = new MessagePort(nick, ecnrypted, adresat);
+                    app.sendCryptoMessage(newMessage,plainText);
+
+                } else
+                {
+                    MessagePort newMessage = new MessagePort(nick, plainText, adresat);
+                    app.sendMessage(newMessage);
+                }
+            }
+
+            
+
+            //if (adresat != "")
+            //{
+            //    app.sendMessage(messagePort);
+            //}
 
         }
 

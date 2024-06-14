@@ -81,6 +81,18 @@ namespace klient
            main();
         }
 
+        public static DiffieHellmanData getMyDataAbout(string adresat)
+        {
+            DiffieHellmanData myData = TryGetValueFromDictionary(dict, adresat);
+
+            if (myData != null)
+            {
+                return myData;
+            }
+
+            return null;
+        }
+
         public void stopTheTread()
         {
             StopTheClient = true;
@@ -222,6 +234,27 @@ namespace klient
             }
         }
 
+        // ta funkcja tak strikte dla klienta, jak wysylasz zaszyfrowana wiadomosc to dla ciebie sie pojawia plaintext
+        // a wysylana jest wiadomosc z z szyfrem 
+        public void sendCryptoMessage(MessagePort messagePort, string plainTextMessage) // string message, string adresat, string action
+        {
+            if (!connected)
+            {
+                return;
+            }
+            info($"$$$$ [TY]: {plainTextMessage} do {messagePort.adresat}: "); // w twoim oknie pojawia się twoja wiadomosc // {clientName}
+            string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
+            byte[] data = Encoding.ASCII.GetBytes(jsonMessage);
+            try {
+                gloabalStream.Write(data, 0, data.Length);
+            }
+            catch (Exception e) {
+                sendTxErrorMessage($"[2406150115] sendMessage(): nie moge zsapisac nic do globalstream {e}");
+            }
+        }
+
+
+
         // nie moge wywolac sendMessage z poziomu statycznej metody wiec tworze tez statyczna metode do wysylania
         // chodzi o sytuacje w ktorej klient dostal requesta i od razu sam z siebie odsyla wiadomosc
         public static void innerSendMessage(MessagePort messagePort)
@@ -239,6 +272,8 @@ namespace klient
             }
         }
 
+        // wyciaganie ze slownika obiektu DiffieHellmanData, klient robi to np. po to zeby zobaczyc czy ma znim szyfrowany czat
+        // wyciaganie dzieje za kazdym razem jak ktos wysle do klienta wiadomosc 
         private static DiffieHellmanData TryGetValueFromDictionary(Dictionary<string,DiffieHellmanData> dict, string username)
         {
             try
@@ -252,6 +287,7 @@ namespace klient
             }
         }
 
+        // glowa petla ktora pobiera wiadomsoci przez caly czas dzialania klienta 
         private static Task ReceiveMessages(NetworkStream stream)
         {
             byte[] buffer = new byte[1024];
@@ -261,6 +297,7 @@ namespace klient
             string adresat = "";
             bool successReceivingData = false;
 
+            // jakis dziwne error mialem i to niby go roziwazuje 
             System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
 
             try
@@ -286,7 +323,7 @@ namespace klient
                         string message = messagePort.message;
                         string action = messagePort.action;
 
-                        DiffieHellmanData diffieData;
+                        
 
                         successReceivingData = true;
 
@@ -298,7 +335,8 @@ namespace klient
                         // tuaj wyswieltam wiadomosc w kliencie, otrzymana z serwera od innego klienta
                         //info($"Odebrano od {message.kto_przesyla}: {message.message}");
                         //info($"odebrana wiadomsc : kto: {messagePort.kto_przesyla}: co: {messagePort.message} akcja: {messagePort.action}");
-
+                        
+                        DiffieHellmanData diffieData;
                         // po otrzymaniu wiadomosci od kogos klient patrzy czy ma go w slowniku
                         diffieData = TryGetValueFromDictionary(dict, ktoNapisal);
 
@@ -313,7 +351,17 @@ namespace klient
                             info($"----> [{ktoNapisal}]: {message}");
                         }
                         else if (messagePort.action == "message" && diffieData.allowEncryptedChat == true) {
-                            info($"ZASZYFROWANA WIADOMOSC");
+                            // ta opcja wlaczana oznacza ze dostales zaszyfrowana wiadomosc 
+                            string my_private_key = diffieData.getK().ToString();
+                            string decrypted = AES.Decrypt(message, my_private_key);
+
+                            info($"----> [{ktoNapisal}]: {decrypted}");
+                            //info($"ZASZYFROWANA WIADOMOSC");
+
+                            // wyciagam swoj klucz publiczny ze slownika (jaki byl ustanowiony z danym uzytkownikiem)
+
+                            string his_public_key = diffieData.ABclient2.ToString(); 
+
                         }
 
                         messageBuilder.Remove(0, endIndex + 5); // Usuń przetworzoną wiadomość z bufora
