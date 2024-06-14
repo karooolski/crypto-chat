@@ -91,7 +91,7 @@ namespace klient
                 try
                 {
                     //textbox.Text += "[TcpServer] " + message + "\n";
-                    string fullMessage = "[TcpClientApp] " + message + "\n";
+                    string fullMessage = message + "\n";
                     textbox.Invoke(new Action(delegate ()
                     {
                         textbox.AppendText(Convert.ToString(fullMessage));
@@ -101,6 +101,27 @@ namespace klient
                     return; 
                 }
                 
+            }
+        }
+
+        public static void loginfo(string message)
+        {
+            if (textbox != null)
+            {
+                try
+                {
+                    //textbox.Text += "[TcpServer] " + message + "\n";
+                    string fullMessage = "[TcpClientApp] " + message + "\n";
+                    textbox.Invoke(new Action(delegate ()
+                    {
+                        textbox.AppendText(Convert.ToString(fullMessage));
+                    }));
+                }
+                catch (Exception e)
+                {
+                    return;
+                }
+
             }
         }
 
@@ -176,8 +197,8 @@ namespace klient
             {
                 return;
             }
-
-            info($"{clientName}: {messagePort.message}");
+            
+            info($"$$$$ [TY]: {messagePort.message}"); // w twoim oknie pojawia się twoja wiadomosc // {clientName}
 
             //MessagePort messagePort = new MessagePort(clientName, message, adresat, action);
             string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
@@ -239,13 +260,13 @@ namespace klient
                         string jsonMessage = completeMessage.Substring(startIndex + 7, endIndex - startIndex - 7);
                         messagePort = JsonSerializer.Deserialize<MessagePort>(jsonMessage);
 
-                        info($"Odebralem: {jsonMessage}");
+                        
 
                         string ktoNapisal = messagePort.kto_przesyla;
                         adresat = messagePort.adresat;
                         string numberstr = messagePort.getNumber();
                         BigInteger number = BigInteger.Parse(numberstr);
-                        info($"i jak wyciagam liczbe to number mam taki {number} a w string jest {numberstr}");
+                        //loginfo($"i jak wyciagam liczbe to number mam taki {number} a w string jest {numberstr}");
                         string message = messagePort.message;
                         string action = messagePort.action;
 
@@ -259,13 +280,16 @@ namespace klient
                         // tuaj wyswieltam wiadomosc w kliencie, otrzymana z serwera od innego klienta
                         //info($"Odebrano od {message.kto_przesyla}: {message.message}");
                         //info($"odebrana wiadomsc : kto: {messagePort.kto_przesyla}: co: {messagePort.message} akcja: {messagePort.action}");
-                        info($"{ktoNapisal}: {message}");
+                        info($"----> [{ktoNapisal}]: {message}");
 
                         messageBuilder.Remove(0, endIndex + 5); // Usuń przetworzoną wiadomość z bufora
                         
 
                         if(messagePort.action == "requestEncryptedChat")
                         {
+                            // klient 2 odbiera wiadomosc od klient1 wraz z akcja requestEncryptedChat
+                            // (klient 1 wyslal wiadomosc z requestem z poziomu buttona wiec kod jego jest w From2.cs) 
+
                             info($"(requestEncryptedChat) Odebralem: {jsonMessage}");
                             string infos = $"Uzytkownik {ktoNapisal} prosi ciebie o ustanowienia szyfrowanego czatu";
                             info(infos);
@@ -285,7 +309,7 @@ namespace klient
                             }
                             else if (result == DialogResult.Yes)
                             {
-                                // klient2 
+                                // klient2 - decyzja yes
 
                                 info($"Zgodizles sie na szyfrowany czat, wysylasz liczbe pierwsza: {number}");
                                 //int liczba = PrimeNumberGenerator.generate(10000);
@@ -328,7 +352,7 @@ namespace klient
                         }
                         else if(messagePort.action == "acceptEncryptedChatRequest") // tutaj klient1 otrzymal od klienta2 potiwerdzenie
                         {
-                            // klient1 
+                            // klient1, po tym jak otrzymal zgode od drugiego uzytkownika na polaczenie krypto, oraz dostal od niego z powrotem liczbe pierwsza
 
                             string klient = messagePort.adresat; 
 
@@ -350,7 +374,7 @@ namespace klient
                             BigInteger ABliczba = diffieData.AB;
                             string ABliczbastr = ABliczba.ToString();
                             string newAction = "ShareAB";
-                            string answermsg = $"{adresat} Wysylam klucz publiczny AB: {ABliczba} do {ktoNapisal}";
+                            string answermsg = $"{adresat}: Wysylam do Ciebie klucz publiczny AB: {ABliczba} do {ktoNapisal}";
                             MessagePort shareAB = new MessagePort(adresat, answermsg, ktoNapisal, newAction, ABliczbastr);
                             innerSendMessage(shareAB);
                         }
@@ -358,15 +382,18 @@ namespace klient
                         {
                             // klient 2, otrzymal klucz publiczny od klienta 1
 
+                            string klient = messagePort.adresat; // adkutalny klient to adresat messega jaki otrzymal
+                            //info($"{klient} Odebralem: {jsonMessage}");
+                            info($"{klient} dostalem od kolegi klucz publiczny = {messagePort.number}");
+
                             string ABkolegi_str = messagePort.getNumber();
                             BigInteger ABkolegi = BigInteger.Parse(ABkolegi_str);
                             diffieData.setABclient2(ABkolegi);
                             diffieData.calculateK();
                             BigInteger K = diffieData.getK();
 
-                            string klient = messagePort.adresat; // adkutalny klient to adresat messega jaki otrzymal
+                            info($"{klient}: Obliczam klucz prywatny: publicznyKolegi^ab mod p = {ABkolegi}^{diffieData.ab} mod {diffieData.p} = {K}");
                             info($"{klient}: Moj klucz prywatny to {K}");
-
 
                             string answermsg = $"{adresat} Teraz ja Wysylam swoj klucz publiczny AB: {diffieData.AB}";
                             string newAction = "ShareAB_2";
@@ -379,14 +406,18 @@ namespace klient
                         }
                         else if (messagePort.action == "ShareAB_2")
                         {
+                            
                             // klient1, po tym jak otrzymal klucz publiczny od klient2,  
 
                             string klient = messagePort.adresat; // tutaj wiadomosc z kluczem publicznym klienta2 idzie do klienta1 
+                            //info($"{klient} Odebralem: {jsonMessage}");
+                            info($"{klient} dostalem od kolegi klucz publiczny = {messagePort.number}");
                             string ABkolegi_str = messagePort.getNumber();
                             BigInteger ABkolegi = BigInteger.Parse(ABkolegi_str);
                             diffieData.setABclient2(ABkolegi);
                             diffieData.calculateK();
                             BigInteger K = diffieData.getK();
+                            info($"{klient}: Obliczam klucz prywatny: publicznyKolegi^ab mod p = {ABkolegi}^{diffieData.ab} mod {diffieData.p} = {K}");
                             info($"{klient}: Moj klucz prywatny to {K}");
                         }
                         //else if(messagePort.action == "sendPublicKey")
