@@ -10,6 +10,8 @@ namespace klient
 {
     class DiffieHellmanData
     {
+        public string you = "not defined";
+
         public BigInteger p = 0; // wspolna liczba pierwsza == prime number, ustalana miedzy klientami ale u mnie jeden klient ustala a drugi sie zgadza na to
         public BigInteger g = 0; // podsatwa, prymitywny pierwiastek pierwotny modulo p
         public BigInteger ab = 0; // losowa liczna calkowita klient1 ma a, klient2 ma b, ale w implementracji klienta to jedna zmienna , gdzie 1 < ab < p-1
@@ -22,6 +24,8 @@ namespace klient
         public bool allowCalculateAB = false;
         public static bool allowShareAB = false;
         public bool allowCalculateK = false;
+
+        public bool allowEncryptedChat = false; // ta zmienna jest ustawiana na true dopiero pod koniec procesu uzgadniania klucza obustronnego
 
         //public void show(string kto)
         //{

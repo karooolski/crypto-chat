@@ -19,6 +19,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Eventing.Reader;
 using System.Numerics;
 using System.Xml.Schema;
+using System.Security;
 
 
 namespace klient
@@ -64,7 +65,8 @@ namespace klient
         string ip;
         public static bool StopTheClient = false;
         Thread receiveThread = null;
-        public static DiffieHellmanData diffieData = null;
+        //public static DiffieHellmanData diffieData = null;
+        public static Dictionary<string, DiffieHellmanData> dict = null;
 
         public TcpClientApp(string clientName, string ip, int portAddr, ref RichTextBox textboxAddr)
         {
@@ -156,7 +158,13 @@ namespace klient
 
             TcpClient client = new TcpClient();
 
-            diffieData = new DiffieHellmanData();
+            dict = new Dictionary<string, DiffieHellmanData>(); 
+
+            //diffieData = new DiffieHellmanData();
+
+            //diffieData.you = clientName;
+
+            //dict[$"{clientName}"] = diffieData; ; // klient ma swoj slownik wraz se swoimi wartosciami oraz innyi ludzmi  
 
             try
             {
@@ -198,7 +206,7 @@ namespace klient
                 return;
             }
             
-            info($"$$$$ [TY]: {messagePort.message}"); // w twoim oknie pojawia się twoja wiadomosc // {clientName}
+            info($"$$$$ [TY]: {messagePort.message} do {messagePort.adresat}: "); // w twoim oknie pojawia się twoja wiadomosc // {clientName}
 
             //MessagePort messagePort = new MessagePort(clientName, message, adresat, action);
             string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
@@ -231,6 +239,19 @@ namespace klient
             }
         }
 
+        private static DiffieHellmanData TryGetValueFromDictionary(Dictionary<string,DiffieHellmanData> dict, string username)
+        {
+            try
+            {
+                DiffieHellmanData data = new DiffieHellmanData();
+                data = dict[username];
+                return data; 
+            } catch(KeyNotFoundException e)
+            {
+                return null; 
+            }
+        }
+
         private static Task ReceiveMessages(NetworkStream stream)
         {
             byte[] buffer = new byte[1024];
@@ -248,19 +269,14 @@ namespace klient
                 {
                     string receivedData = Encoding.ASCII.GetString(buffer, 0, bytesRead);
                     messageBuilder.Append(receivedData);
-
                     string completeMessage = messageBuilder.ToString();
-
-                    // Sprawdź, czy wiadomość zawiera oba znaczniki
-                    int startIndex = completeMessage.IndexOf("<START>");
+                    int startIndex = completeMessage.IndexOf("<START>"); // Sprawdź, czy wiadomość zawiera oba znaczniki
                     int endIndex = completeMessage.IndexOf("<END>");
 
                     if (startIndex != -1 && endIndex != -1 && startIndex < endIndex)
                     {
                         string jsonMessage = completeMessage.Substring(startIndex + 7, endIndex - startIndex - 7);
                         messagePort = JsonSerializer.Deserialize<MessagePort>(jsonMessage);
-
-                        
 
                         string ktoNapisal = messagePort.kto_przesyla;
                         adresat = messagePort.adresat;
@@ -269,6 +285,8 @@ namespace klient
                         //loginfo($"i jak wyciagam liczbe to number mam taki {number} a w string jest {numberstr}");
                         string message = messagePort.message;
                         string action = messagePort.action;
+
+                        DiffieHellmanData diffieData;
 
                         successReceivingData = true;
 
@@ -280,7 +298,23 @@ namespace klient
                         // tuaj wyswieltam wiadomosc w kliencie, otrzymana z serwera od innego klienta
                         //info($"Odebrano od {message.kto_przesyla}: {message.message}");
                         //info($"odebrana wiadomsc : kto: {messagePort.kto_przesyla}: co: {messagePort.message} akcja: {messagePort.action}");
-                        info($"----> [{ktoNapisal}]: {message}");
+
+                        // po otrzymaniu wiadomosci od kogos klient patrzy czy ma go w slowniku
+                        diffieData = TryGetValueFromDictionary(dict, ktoNapisal);
+
+                        if (diffieData == null)
+                        {
+                            diffieData = new DiffieHellmanData();
+                            dict[$"{ktoNapisal}"] = diffieData;
+                        }
+
+                        if (messagePort.action == "message" && diffieData.allowEncryptedChat == false)
+                        {
+                            info($"----> [{ktoNapisal}]: {message}");
+                        }
+                        else if (messagePort.action == "message" && diffieData.allowEncryptedChat == true) {
+                            info($"ZASZYFROWANA WIADOMOSC");
+                        }
 
                         messageBuilder.Remove(0, endIndex + 5); // Usuń przetworzoną wiadomość z bufora
                         
@@ -344,10 +378,10 @@ namespace klient
                                 string answermsg = $"{adresat} zgodzil sie na czat szyfrowany, wyliczona podstawa g: {number}";
                                 string number_str = number.ToString();
                                 MessagePort answer = new MessagePort(adresat, answermsg, ktoNapisal, newAction, number_str); // odsylanie liczby pierwszej zpowrotem do ktoNapisal: klien1
-                                innerSendMessage(answer);
 
+                                dict[$"{ktoNapisal}"] = diffieData; // klient2 zapisuje sobie dane do slownika odnosnie klienta1  
                                 
-
+                                innerSendMessage(answer);
                             }
                         }
                         else if(messagePort.action == "acceptEncryptedChatRequest") // tutaj klient1 otrzymal od klienta2 potiwerdzenie
@@ -376,6 +410,9 @@ namespace klient
                             string newAction = "ShareAB";
                             string answermsg = $"{adresat}: Wysylam do Ciebie klucz publiczny AB: {ABliczba} do {ktoNapisal}";
                             MessagePort shareAB = new MessagePort(adresat, answermsg, ktoNapisal, newAction, ABliczbastr);
+
+                            dict[$"{ktoNapisal}"] = diffieData; // klient1 zapisuje sobie dane do slownika odnosnie klienta2 
+
                             innerSendMessage(shareAB);
                         }
                         else if (messagePort.action == "ShareAB") // tutaj klien1 otrzymuje klucz publiczny AB od klienta2 
@@ -399,6 +436,10 @@ namespace klient
                             string newAction = "ShareAB_2";
                             string liczba_str = diffieData.AB.ToString(); ;
 
+                            diffieData.allowEncryptedChat = true;
+
+                            dict[$"{ktoNapisal}"] = diffieData; // klient2 zapisuje sobie dane do slownika odnosnie klienta1 
+
                             MessagePort shareAB_2 = new MessagePort(adresat, answermsg, ktoNapisal, newAction, liczba_str);
                             innerSendMessage(shareAB_2); // klient2 wysyla swoj klucz publiczny do klienta1 
 
@@ -417,6 +458,11 @@ namespace klient
                             diffieData.setABclient2(ABkolegi);
                             diffieData.calculateK();
                             BigInteger K = diffieData.getK();
+
+                            diffieData.allowEncryptedChat = true;
+
+                            dict[$"{ktoNapisal}"] = diffieData; // klient1 zapisuje sobie dane do slownika odnosnie klienta2
+
                             info($"{klient}: Obliczam klucz prywatny: publicznyKolegi^ab mod p = {ABkolegi}^{diffieData.ab} mod {diffieData.p} = {K}");
                             info($"{klient}: Moj klucz prywatny to {K}");
                         }
