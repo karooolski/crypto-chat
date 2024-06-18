@@ -81,7 +81,7 @@ namespace klient
         }
 
 
-       static byte[] generateIV()
+       static byte[] generateIV() // generowanie wektora inicjalizujacego 
         {
             using (Aes aesAlg = Aes.Create())
             {
@@ -90,10 +90,9 @@ namespace klient
             }
         }
 
-        // chyba spko dziala generowanie iv
+        // ok dziala generowanie iv
         static byte[] GetLegalIV(string key)
         {
-
             byte[] IV = generateIV();
             byte[] bytTemp = IV;
             int IVLength = bytTemp.Length;
@@ -114,32 +113,30 @@ namespace klient
             return iv;
         }
 
-        // uzgadanianie klucza do AES : test 
-        static string uzgodnij_klucz_do_AES(string klucz_prywanty)
+        // uzgadanianie klucza do AES : 
+        // czyli przepusc klucz prywatny z diffie hellman (liczba w postaci string) przez SHA256
+        static string uzgodnij_klucz_do_AES(string klucz_prywanty) // Tworzenie klucza symetrycznego (np. z hasła "1234")
         {
-            // Tworzenie klucza symetrycznego (np. z hasła "1234")
             byte[] key;
-
             using (var sha256 = SHA256.Create())
             {
                 key = sha256.ComputeHash(Encoding.UTF8.GetBytes(klucz_prywanty));
             }
             string keystr = Convert.ToBase64String(key);
-            Console.WriteLine($"{keystr}");
+            //Console.WriteLine($"{keystr}");
             return keystr;
-
         }
 
 
         public static string Encrypt(string message, string key)
         {
-            string klucz_do_AES = uzgodnij_klucz_do_AES(key); // AES wymaga 2 kluczy symetrycznych
+            string klucz_do_AES = uzgodnij_klucz_do_AES(key);                       // AES wymaga 2 kluczy symetrycznych
             string klucz_IV = IVtestgenarator(key);
-            byte[] byte_AES_key = Convert.FromBase64String(klucz_do_AES);
+            byte[] byte_AES_key = Convert.FromBase64String(klucz_do_AES);           // AES z dokumentacji Microsoftu wymaga kluczy w postaci bajtow,tutaj SHA256 base64 to klucz1
             byte[] byte_IV = Convert.FromBase64String(klucz_IV);
             byte[] encrypted = AES.EncryptStringToBytes_Aes(message, byte_AES_key, byte_IV);
             string enrypted_str = Convert.ToBase64String(encrypted);
-            return enrypted_str;
+            return enrypted_str; // musze zamianiac na string bo chce przesylac obiekt z danymi zserializowany przez json serializer do stringa miedzy klient - serwer - klient
         }
         public static string Decrypt(string encrypted, string key)
         {

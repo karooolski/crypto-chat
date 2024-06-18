@@ -14,8 +14,19 @@ namespace serwer
         public string kto_przesyla { get; set; }
         public string action { get; set; }
         public string number { get; set; } // json serializer nie serializuje wartosci zmiennoprzecinkowych, dlatego string zeby wartosci zapisywac jako string i przeslyac klient-serwer
+        public string myIP { get; set; }
 
-        public MessagePort() { }
+
+
+    public MessagePort()
+        {
+            message = "None";
+            adresat = "None";
+            kto_przesyla = "None";
+            action = "message";
+            number = "10";
+            myIP = "none77";
+        }
 
         //public BigInteger getNumber()
         //{
@@ -32,31 +43,35 @@ namespace serwer
         }
 
         // to jest do wysylania wiadomosci strike czat 
-        public MessagePort(string kto, string message0, string adresat0)
+        public MessagePort(string kto, string message0, string adresat0, string _myIP)
         {
             message = message0;
             adresat = adresat0;
             kto_przesyla = kto;
             action = "message";
             number = "-999";
+            myIP = _myIP;
+
         }
         // to jest do wys wysylania wiadomosci z akcja np. wylogowywanie sie 
-        public MessagePort(string kto, string message0, string adresat0, string action0)
+        public MessagePort(string kto, string message0, string adresat0, string action0, string _myIP)
         {
             message = message0;
             adresat = adresat0;
             kto_przesyla = kto;
             action = action0;
             number = "-999";
+            myIP = _myIP;
         }
         // to jest do diffy hellman wysylanie wiadomosci z liczba  
-        public MessagePort(string kto, string message0, string adresat0, string action0, string number0)
+        public MessagePort(string kto, string message0, string adresat0, string action0, string number0, string _myIP)
         {
             message = message0;
             adresat = adresat0;
             kto_przesyla = kto;
             action = action0;
             number = number0;
+            myIP = _myIP;
         }
     }
 }

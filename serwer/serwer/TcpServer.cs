@@ -12,29 +12,12 @@ using System.Threading;
 using System.Windows.Forms;
 using System.Xml.Linq;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-
-// serializowanie obiektow jakie wysylam na serwer 
-public class Serializer
-{
-    public static byte[] serializeObject(Object obj1ect)
-    {
-        byte[] serializedData = JsonSerializer.SerializeToUtf8Bytes(obj1ect);
-        return serializedData;
-    }
-    public static Object deserializeObject(byte[] serializedObject, Type myClass)
-    {
-        Object deserializedObject = JsonSerializer.Deserialize(serializedObject, myClass);
-
-        if (deserializedObject != null)
-        {
-            return deserializedObject;
-        }
-
-        return null;
-    }
-}
-
-
+using static System.Net.Dns;
+using System.Web;
+using System.Linq.Expressions;
+using System.Net.NetworkInformation;
+using System.Linq;
+using System.Windows.Forms.VisualStyles;
 
 
 class TcpServer
@@ -44,10 +27,23 @@ class TcpServer
 
     private static List<ClientHandler> clients = new List<ClientHandler>();
     private static readonly object lockObject = new object();
+    public string ipServer = "";
+    public string defaultGateway = "";
+    public int port = 5000;
 
-    public TcpServer(ref RichTextBox textBox1)
+    public TcpServer(ref RichTextBox textBox1,string _port_)
     {
         textbox = textBox1;
+        try
+        {
+            port = Int32.Parse(_port_);
+        }
+        catch (Exception e)
+        {
+            port = 5000;
+          info($"Nastapil bload podczas ladowania portu, port zostal ustawiny na 5000!, pelna tresc bledu: {e}");
+        }
+        //info($"Port serwera: {port}");
     }
 
     public static void info(string message)
@@ -56,48 +52,65 @@ class TcpServer
         {
             //textbox.Text += "[TcpServer] " + message + "\n";
             string fullMessage = "[TcpServer] " + message + "\n";
-            textbox.Invoke(new Action(delegate ()
-            {
-                textbox.AppendText(Convert.ToString(fullMessage));
-            }));
+                textbox.Invoke(new Action(delegate ()
+                {
+                    textbox.AppendText(Convert.ToString(fullMessage));
+                })); 
         }
     }
-
-    private string getHostIPAddress()
+    public static string GetServerIPV4()
     {
-        string myHost = System.Net.Dns.GetHostName();
-        string myIP = System.Net.Dns.GetHostEntry(myHost).AddressList[0].ToString();
-        return myIP;
+        IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
+
+        foreach (IPAddress address in ipHostInfo.AddressList)
+        {
+            if (address.AddressFamily == AddressFamily.InterNetwork)
+                return address.ToString();
+        }
+
+        return string.Empty;
     }
 
-    //private string requestIP()
-    //{
-    //    string serverIP = Request.ServerVariables["LOCAL_ADDR"];
-    //    return 
-    //}
+    public static IPAddress GetDefaultGateway()
+    {
+        return NetworkInterface.GetAllNetworkInterfaces()
+            .Where(n => n.OperationalStatus == OperationalStatus.Up)
+            .Where(n => n.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+            .SelectMany(n => n.GetIPProperties()?.GatewayAddresses)
+            .Select(g => g?.Address)
+            .Where(a => a != null)
+            .Where(a => a.AddressFamily == AddressFamily.InterNetwork)
+            .Where(a => Array.FindIndex(a.GetAddressBytes(), b => b != 0) >= 0)
+            .FirstOrDefault();
+    }
 
     public void StartServer()
     {
-        TcpListener listener = new TcpListener(IPAddress.Any, 5000);
+        
+        TcpListener listener = new TcpListener(IPAddress.Any, port);
         listener.Start();
 
-        string ipserver = getHostIPAddress();
-        info($"Adres IP Serwera {ipserver}");
-        info("Serwer nasłuchuje na porcie 5000...");
+        ipServer = GetServerIPV4();
+        defaultGateway = GetDefaultGateway().ToString();
+        info($"Adres IP Serwera (IPV4) {ipServer}");
+        info($"Default Gateway: " + defaultGateway);
+        info($"Serwer nasłuchuje na porcie {port}...");
 
         while (true)
         {
             TcpClient client = listener.AcceptTcpClient();
             ClientHandler clientHandler = new ClientHandler(client, ref textbox);
-            lock (lockObject)
+            lock (lockObject)                                       // zabezpieczenie przed dostepem roznych watkow
             {
                 clients.Add(clientHandler);
             }
-            Thread clientThread = new Thread(clientHandler.Handle); // handlowanie wiadomosci 
+            Thread clientThread = new Thread(clientHandler.Handle); // handlowanie wiadomosci (przechwytywanie) 
             clientThread.Start();
         }
     }
 
+    // tutaj patrze czy mam adresata na liscie polaczonych klientow, jezeli tak to wysylam wiadomosc 
+    // jezeli nie daje info do wysylajacego ze adresat nie jest polaczony
     public static void BroadcastMessage(MessagePort messagePort, ClientHandler sender)
     {
         lock (lockObject)
@@ -105,19 +118,12 @@ class TcpServer
             ClientHandler recipient = clients.Find(c => c.ClientName == messagePort.adresat);
             if (recipient != null)
             {
-                //string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
-                //recipient.SendMessage(messagePort.message, recipient.ClientName);
-                //recipient.SendMessage(messagePort.kto_przesyla, messagePort.message,messagePort.adresat,messagePort.action);
                 recipient.SendMessage(messagePort);
-
-                // Wysłanie potwierdzenia do nadawcy
-                //sender.SendMessage($"<START>{{\"Message\":\"Serwer odebrał wiadomość\",\"Adresat\":\"{sender.ClientName}\",\"KtoPrzesyla\":\"Server\"}}<END>");
-                //sender.SendBackMessage($"[TcpServer] (potwierdzenie): adresat {recipient.ClientName} == {messagePort.adresat} oderbal wiadomosc");
             }
             else
             {
                 string msg = $"[TcpSerwer] Klient {messagePort.adresat} jest niedostępny";
-                sender.SendMessage(msg,sender.ClientName);
+                sender.SendMessage(msg,sender.ClientName, messagePort.myIP);
                 //sender.SendMessage($"<START>{{\"Message\":\"Klient '{message.adresat}' nie jest dostępny\",\"Adresat\":\"{sender.ClientName}\",\"KtoPrzesyla\":\"Server\"}}<END>");
             }
         }
@@ -139,6 +145,7 @@ class ClientHandler
     private TcpClient client;
     private NetworkStream stream;
     private string clientName;
+    private bool logedOut = false; 
 
     public string ClientName { get => clientName; }
 
@@ -195,34 +202,45 @@ class ClientHandler
 
                 if (startIndex != -1 && endIndex != -1 && startIndex < endIndex)
                 {
-                    string jsonMessage = completeMessage.Substring(startIndex + 7, endIndex - startIndex - 7);
+                    
+                    string jsonMessage = completeMessage.Substring(startIndex + 7, endIndex - startIndex - 7); // usuwam znaczniki json z poczatku i z konca
                     
                     // deserializacja wiadomosci od uzytkownika na obiekt w ktorym trzymam dane jakie chce
                     MessagePort message = JsonSerializer.Deserialize<MessagePort>(jsonMessage);
                     
-                    info($"Odebrano od {clientName}: {jsonMessage}"); // pokazuje w texboxie caly json 
-                    
                     // akcja serwera wobec wiadomosci
-                    if (message == null)
+                    if (message == null) 
                     {
                         return;
                     }
-                    if (actionBetweenUsers(message.action)) // to jest zwykla wiaodmosc od uztykownika lub akcja jednego uzytkownika wobec drugiego
+                    string sender_action = message.action;              // zeby to bylo poprawnie przypisane wazne zeby messagePort mial get; set;
+
+                    info($"Odebrano od {clientName}: {jsonMessage}\n");   // pokazuje w texboxie caly json 
+
+                    bool allow_send_forward_message = actionBetweenUsers(sender_action);
+
+                    if (allow_send_forward_message)                     // tutaj okreslam dozwolone akcje jakie serwer przesyla dalej miedzy uzytkownikami
                     {
-                        TcpServer.BroadcastMessage(message, this); // this czyli ClientHandler, przesyla sam siebie
+                        TcpServer.BroadcastMessage(message, this);      // this czyli ClientHandler, przesyla sam siebie
                     }
-                    else if (message.action == "logout") // to jest request od uzytkownika 
+                    else if (sender_action == "logout")                 // to jest request od uzytkownika 
                     {
+                        messageBuilder.Remove(0, endIndex + 5);
                         client.Close();
                         TcpServer.RemoveClient(this);
+                        logedOut = true;
+                        break;
                     }
-                    messageBuilder.Remove(0, endIndex + 5); // Usun przetworzona wiadomosc z bufora
+                    if (!logedOut) // gdy clientHandler != null, czyli wtedy kidy nie wylogowywal sie
+                    {
+                        messageBuilder.Remove(0, endIndex + 5);             // Usun przetworzona wiadomosc z bufora
+                    }
+                    
                 }
             }
         }
         catch (Exception e)
         {
-            //Console.WriteLine($"Błąd: {e.Message}");
             info($"[2406130311] Błąd: {e.Message}");
         }
         finally
@@ -230,28 +248,13 @@ class ClientHandler
             stream.Close();
             client.Close();
             TcpServer.RemoveClient(this);
-            //Console.WriteLine($"{clientName} rozłączony.");
             info($"{clientName} rozłączony.");
         }
     }
 
-    public void SendMessage(string message, string adresat)
+    public void SendMessage(string message, string adresat, string senderIP)
     {
-        MessagePort messagePort = new MessagePort(ClientName, message, adresat);
-        string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
-        byte[] data = Encoding.ASCII.GetBytes(jsonMessage);
-        stream.Write(data, 0, data.Length);
-    }
-    public void SendBackMessage(string message)
-    {
-        MessagePort messagePort = new MessagePort("[Serwer]", message, "[z powrotem]");
-        string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
-        byte[] data = Encoding.ASCII.GetBytes(jsonMessage);
-        stream.Write(data, 0, data.Length);
-    }
-    public void SendMessage(string kto_przesyla, string wiaodmosc, string adresat, string akcja)
-    {
-        MessagePort messagePort = new MessagePort(kto_przesyla, wiaodmosc, adresat, akcja);
+        MessagePort messagePort = new MessagePort(ClientName, message, adresat, senderIP);
         string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
         byte[] data = Encoding.ASCII.GetBytes(jsonMessage);
         stream.Write(data, 0, data.Length);
@@ -263,31 +266,26 @@ class ClientHandler
         stream.Write(data, 0, data.Length);
     }
 
-
-    // dozwolone akcje ktore sa przesylane miedzy klientami np. miedzy klientem a, do klienta b, akcja ktora jest jako action nie dotyczy serwera
-    // a drugiego uzytkownika do ktorego wysylana jest wiadomosc
-    // np. uzytkonik a prosi uzytkownika b o ustanowienie prywatengo czatu
+    /// <summary>
+    /// dozwolone akcje ktore sa przesylane miedzy klientami np. miedzy klientem a, do klienta b, akcja ktora jest jako action nie dotyczy serwera
+    /// a drugiego uzytkownika do ktorego wysylana jest wiadomosc
+    /// np. uzytkonik a prosi uzytkownika b o ustanowienie prywatengo czatu
+    /// </summary>
+    /// <param name="action"></param>
+    /// <returns></returns>
     private bool actionBetweenUsers(string action)
     {
         string [] actions = { "message", "requestEncryptedChat" , "cancelEncryptedChatRequest", "acceptEncryptedChatRequest", "ShareAB", "ShareAB_2"
 
         };
 
-        foreach (string obj in actions)
+        foreach (string obj in actions) // patrzymy czy przslana akcja zgadza sie z dozwolonymi akcjami
         {
             if (obj == action)
             {
                 return true;
             }
         }
-//
-   //     if(action == "message" || action == "requestEncryptedChat" || action == "cancelEncryptedChatRequest")
-           // return true;
         return false;
     }
-
-
-
 }
-
-// allowedMessageActionsAsMessages

@@ -8,23 +8,60 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace klient
 {
     public partial class Form1 : Form
     {
         public String nick = "";
+        private string serverIP = "_not_defined_";
+        private string serverPort = "_not_defined_";
+
         public Form1()
         {
             InitializeComponent();
         }
+
+        private bool ValidateContact(string txt)
+        {
+            int val;
+            if (int.TryParse(txt, out val))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        private bool Empty(string txt)
+        {
+            if (txt.Equals("")) 
+                return true;
+            return false;
+        }
+
         private void button1_Click(object sender, EventArgs e)
         {
             if (nick != "")
             {
-                Form form2 = new Form2(nick);
-                form2.Show();
-                Hide(); // form.Hide();
+                serverIP = richTextBox3.Text; // ktos moze zrobic ctrl v wiec to tez tu powinno byc
+                serverPort = richTextBox2.Text;
+                
+                if (Empty(serverIP))
+                    serverIP = "127.0.0.1";
+                if (Empty(serverPort))
+                    serverPort = "5000";
+
+                bool validPort1 = ValidateContact(serverPort);
+
+                if (validPort1)
+                {
+                    Form form2 = new Form2(nick, serverIP, serverPort);
+                    form2.Show();
+                    Hide(); // form.Hide();
+                }
             }
 
         }
@@ -43,6 +80,16 @@ namespace klient
         {
             //Application.Exit(); // w tym moemencie w apliakcji nie ma żadnych watkow wiec moge tylko zamknac proces
             Environment.Exit(0);
+        }
+
+        private void richTextBox3_TextChanged(object sender, EventArgs e)
+        {
+            serverIP = richTextBox3.Text;
+        }
+
+        private void richTextBox2_TextChanged(object sender, EventArgs e)
+        {
+            serverPort = richTextBox2.Text;
         }
     }
 }
