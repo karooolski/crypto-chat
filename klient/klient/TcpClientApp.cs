@@ -42,18 +42,18 @@ namespace klient
         static RichTextBox textbox = null; 
         string clientIP = "";
         public static int port = 5000;
-        static NetworkStream gloabalStream = null;
+        public static NetworkStream gloabalStream = null;
         public static bool connected = false;
         string clientName;
         static string clientNameStatic; 
         string serverIP;
         static System.Net.IPAddress address;  // tez server ip ale w odpowiedniej formie  "192.168.56.1" // 127.0.0.1
         public static bool StopTheClient = false;
-        Thread receiveThread = null;
+        static Thread receiveThread = null;
         static string myIP = "0";
         //public static DiffieHellmanData diffieData = null;
         public static Dictionary<string, DiffieHellmanData> dict = null; // slownik key: "uztykownik", value: "dane do diffie helman"
-        
+        public static bool servrBreakup = false;
 
         public TcpClientApp(string clientName, string _ip_, int portAddr, ref RichTextBox textboxAddr,string _myIP)
         {
@@ -206,7 +206,18 @@ namespace klient
             //MessagePort messagePort = new MessagePort(clientName, message, adresat, action);
             string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
             byte[] data = Encoding.ASCII.GetBytes(jsonMessage);
-            
+            gloabalStream.Flush();
+
+
+            // nie da sie odczytac tego tutaj
+            //byte[] buffer = new byte[1024];
+            //int bytesRead;
+            //// Pobierz nazwę klienta
+            //bytesRead = gloabalStream.Read(buffer, 0, buffer.Length);
+            //string bytesreadstr = Convert.ToBase64String(buffer);
+            //info($"odczyt buffera: {bytesreadstr}\n");
+
+
             try
             {
                 gloabalStream.Write(data, 0, data.Length);
@@ -218,6 +229,7 @@ namespace klient
                 gloabalStream.Close();
                 //gloabalStream.Close();
             }
+            gloabalStream.Flush();
         }
 
 
@@ -243,6 +255,7 @@ namespace klient
                 lastErrorMessage = e.ToString();
                 sendTxErrorMessage($"[2406150115] sendMessage(): nie moge zsapisac nic do globalstream {e}");
             }
+            gloabalStream.Flush();
         }
 
 
@@ -321,6 +334,7 @@ namespace klient
             {
                 while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) != 0 || !StopTheClient)
                 {
+                    messageBuilder.Clear();
                     string receivedData = Encoding.ASCII.GetString(buffer, 0, bytesRead);
                     messageBuilder.Append(receivedData);
                     string completeMessage = messageBuilder.ToString();
@@ -530,6 +544,9 @@ namespace klient
                 lastErrorMessage = e.ToString();
                 //sendTxErrorMessage($" [2406122129] ReceiveMessages() problem z whilem do receive messages : Blad->> {e}");
                 sendTxErrorMessage("Nastąpiło rozłączenie z serwerem lub do polaczenia nie doszlo");
+                gloabalStream.Flush();
+                connected = false;
+                servrBreakup = true; 
                 //Environment.Exit(0);
             }
 
@@ -590,13 +607,27 @@ public static string GetIPV4_2()
             }
         }
 
+    public static bool checkClientConnectionWithoutTryToLogIn()
+        {
+            if (client == null)
+            {
+                return false;
+            }
+            else if (client.Connected)
+            {
+                return true;
+            }
+            return false;
+        }
     public static bool IsConnected()
         {
             if(client == null)
             {
-                client = new TcpClient();
-                bool tryConnectbool = tryConnect();
-                return tryConnectbool;
+                connected = false;
+                //client = new TcpClient();
+                // bool tryConnectbool = tryConnect();
+                return false;
+
             }
             try
             {
@@ -604,6 +635,7 @@ public static string GetIPV4_2()
                // client.Connect(address, port);
                 if (client.Connected)
                 {
+                    connected = true;
                     return true;
                 }
                 else
@@ -617,6 +649,7 @@ public static string GetIPV4_2()
             {
                 lastErrorMessage = e.ToString();
                 //Console.WriteLine($"Błąd połączenia: {e.Message}");
+                connected = false;
                 return false;
             }
         }
@@ -635,26 +668,33 @@ public static string GetIPV4_2()
                 client.Connect(address, port);
                 NetworkStream stream = client.GetStream();
                 gloabalStream = stream;
+                TcpClientApp.gloabalStream.Flush();
 
                 // Wysyłanie nazwy klienta do serwera
                 byte[] nameData = Encoding.ASCII.GetBytes(clientNameStatic);
                 stream.Write(nameData, 0, nameData.Length); // przedstaw sie serwerowi poraz drugi
+
+                //wroc
+                receiveThread = new Thread(() => ReceiveMessages(gloabalStream));
+                receiveThread.Start();
 
                 //innerSendMessageTextOnly(clientNameStatic); // przedstaw sie zerwerowi
                 //dict = null; // wyzeruje sobie tez slownik na wypadek gdyby byla krypto message 
 
                 if (client.Connected)  //client.Connected
                 {
+                    connected = true;
                     return true;
                 }
                 else
                 {
+                    connected = false;
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                lastErrorMessage = ex.ToString();
+                lastErrorMessage = "[TcpClient -> tryConnect()\n]" + ex.ToString();
                 //Console.WriteLine($"Błąd połączenia: {ex.Message}");
                 return false;
             }

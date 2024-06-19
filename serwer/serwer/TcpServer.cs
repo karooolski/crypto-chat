@@ -118,7 +118,9 @@ class TcpServer
         while (true)
         {
             TcpClient client = listener.AcceptTcpClient();
+            
             ClientHandler clientHandler = new ClientHandler(client, ref textbox);
+            info($"przypisuje clienta {clientHandler.ClientName}"); // wroc
             lock (lockObject)                                       // zabezpieczenie przed dostepem roznych watkow
             {
                 clients.Add(clientHandler);
@@ -181,7 +183,7 @@ class ClientHandler
     // wowczas klient serwerowi moze przeslac dane a serwer nie ma przypisanego klienta do siebie
     // no i problem jest taki ze jak sie odpali serwer a klient polaczony wysle wiadomosc 
     // to jego nick jest zapisywany jako ta waidomosc czyli <START> i reszta jsona
-    public void checkClient(ClientHandler recipient, string clientName)
+    public bool checkClient(ClientHandler recipient, string clientName)
     {
             //ClientHandler check = TcpServer.clients.Find(c => c.ClientName == recipient.clientName);
             ClientHandler check = TcpServer.clients.Find(c => c.ClientName == clientName);
@@ -193,7 +195,9 @@ class ClientHandler
             TcpServer.clients.Add(recipient);
             //this = recipient;   
              this.client = recipient.client;
+            return true;
         }
+        return false;
     }
 
     // Funckja do wyswietlania lgoow w textboxie serwera
@@ -222,12 +226,22 @@ class ClientHandler
         byte[] buffer = new byte[1024];
         int bytesRead;
 
+        this.stream = client.GetStream();
+
+        stream.Flush();
         // Pobierz nazwę klienta
         bytesRead = stream.Read(buffer, 0, buffer.Length);
+
+        string bytesreadstr = Convert.ToBase64String(buffer);
+        info($"odczyt buffera: {bytesreadstr}");
+        
+
         clientName = Encoding.ASCII.GetString(buffer, 0, bytesRead).Trim();
         StringBuilder messageBuilder = new StringBuilder();
 
-        info($"{clientName} połączony.");
+        info($"odczyt clientname z buffera: {clientName} połączony.");
+
+        
 
         try
         {
@@ -236,6 +250,7 @@ class ClientHandler
 
                 // serwer odczytuje wiadomosc 
                 string receivedData = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+                messageBuilder.Clear(); // to jest wazne zeby wiadomosci starych nie przesylalo po restarcie serwera
                 messageBuilder.Append(receivedData);
                 string completeMessage = messageBuilder.ToString();
                 int startIndex = completeMessage.IndexOf("<START>"); // Sprawdź, czy wiadomość zawiera oba znaczniki
@@ -248,7 +263,12 @@ class ClientHandler
                     // deserializacja wiadomosci od uzytkownika na obiekt w ktorym trzymam dane jakie chce
                     MessagePort message = JsonSerializer.Deserialize<MessagePort>(jsonMessage);
 
-                    checkClient(this, message.kto_przesyla);
+                    bool chckclient = checkClient(this, message.kto_przesyla);
+                    if (chckclient)
+                    {
+                        this.clientName = message.kto_przesyla;
+                    }
+
 
                     // akcja serwera wobec wiadomosci
                     if (message == null) 
@@ -274,11 +294,15 @@ class ClientHandler
                         logedOut = true;
                         break;
                     }
-                    if (!logedOut) // gdy clientHandler != null, czyli wtedy kidy nie wylogowywal sie
+                    else if (!logedOut) // gdy clientHandler != null, czyli wtedy kidy nie wylogowywal sie
                     {
                         messageBuilder.Remove(0, endIndex + 5);             // Usun przetworzona wiadomosc z bufora
                     }
-                    
+                    else
+                    {
+                        info("Wychwycilem nieoblsugiwana akcje! ");
+                    }
+                    stream.Flush();
                 }
             }
         }
@@ -301,12 +325,14 @@ class ClientHandler
         string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
         byte[] data = Encoding.ASCII.GetBytes(jsonMessage);
         stream.Write(data, 0, data.Length);
+        stream.Flush();
     }
     public void SendMessage(MessagePort messagePort)
     {
         string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
         byte[] data = Encoding.ASCII.GetBytes(jsonMessage);
         stream.Write(data, 0, data.Length);
+        stream.Flush();
     }
 
     /// <summary>

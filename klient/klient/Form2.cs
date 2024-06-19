@@ -102,6 +102,18 @@ namespace klient
                                                          MessageBoxIcon.Question);
                 return; 
             }
+            if (TcpClientApp.servrBreakup)
+            {
+                // skoro ledwo co sie podlaczylem do serwera ponownie porpzez IsConnected powyzej
+                // to nie moge znowu pisac wiadomosci bo wtedy bufor dostanie z tego jednego watku: nick IsConnected + json message stad 
+                // choc wazna tu jest kwesita czasu bo po tym pop upie juz bylo wszystko ok i nie musialem robic return nawet xd
+
+                MessageBox.Show($"[TclCientApp]: Pomyslnie polaczono z serwerem, prosze wyslac wiadomosc jeszcze raz!", "Blad!",
+                                 MessageBoxButtons.OK,
+                                 MessageBoxIcon.Question);
+                TcpClientApp.servrBreakup = false;
+                return;
+            }
             plainText = messageBox.Text;
             if (adresat == "")
             {
@@ -109,12 +121,14 @@ namespace klient
             }
             DiffieHellmanData diffieHellman = TcpClientApp.getMyDataAbout(adresat);
 
+            TcpClientApp.gloabalStream.Flush();
+
             if (diffieHellman == null) // czat nie jest szyfrowany wiec tylko wysylam wiadomosc 
             {
                 MessagePort newMessage = new MessagePort(nick, plainText, adresat, myIP);
                 app.sendMessage(newMessage);
             }
-            if (diffieHellman != null)
+            else if (diffieHellman != null)
             {
                 if (diffieHellman.allowEncryptedChat)
                 {
@@ -125,8 +139,8 @@ namespace klient
                 }
                 else
                 {
-                    MessagePort newMessage = new MessagePort(nick, plainText, adresat, myIP);
-                    app.sendMessage(newMessage);
+                   MessagePort newMessage = new MessagePort(nick, plainText, adresat, myIP);
+                   app.sendMessage(newMessage);
                 }
             }
         }
@@ -137,7 +151,7 @@ namespace klient
             string message = "action";
             string adresat = "serwer";
             string action = "logout";
-            if (TcpClientApp.IsConnected())
+            if (TcpClientApp.checkClientConnectionWithoutTryToLogIn())  // IsConnected() // lepiej uzyc statycznej zmiennej, IsConnected robi tez proble polaczenia // a to tutaj jest nie potrzben
             {
                 MessagePort messagePort = new MessagePort(nick, message, adresat, action, myIP);
                 app.sendMessage(messagePort);
@@ -168,6 +182,16 @@ namespace klient
                                                          MessageBoxIcon.Question);
                 return;
             }
+
+            if (TcpClientApp.servrBreakup)
+            {
+                MessageBox.Show($"[TclCientApp]: Pomyslnie polaczono z serwerem, prosze wyslac wiadomosc jeszcze raz!", "Blad!",
+                                 MessageBoxButtons.OK,
+                                 MessageBoxIcon.Question);
+                TcpClientApp.servrBreakup = false;
+                return;
+            }
+
             if (adresat == "")
             {
                 MessageBox.Show($"Prosze wprowadzic nazwe uzytkownika", "Informacja!",
