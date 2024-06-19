@@ -14,7 +14,7 @@ namespace klient
 {
     public partial class Form2 : Form
     {
-
+        string plainText;
         RichTextBox messageBox;
         TcpClientApp app;
 
@@ -24,17 +24,11 @@ namespace klient
         int serverPort = 5000;
         string myIP = "None";
 
-        public Form2()
-        {
-            InitializeComponent();
-        }
-
         public Form2(string nickname, string _serverIP_, string _serverPort_)
         {
             InitializeComponent();
-
-            myIP = TcpClientApp.GetDefaultGateway().ToString(); // GetIPV4()
-            //myIP = TcpClientApp.GetIPV4();
+            //myIP = TcpClientApp.GetDefaultGateway().ToString();
+            myIP = TcpClientApp.GetIPV4();
 
             if (_serverIP_ == "_not_defined_" || _serverIP_ == "")
             {
@@ -60,7 +54,9 @@ namespace klient
                 }
 
             }
-            richTextBox5.Text = $"myIP: {myIP}\nserverIP:{serverIP}\nport:{serverPort}";
+            string _ipv4_ = TcpClientApp.GetIPV4();
+            string default_gateway = TcpClientApp.GetDefaultGateway().ToString();
+            richTextBox5.Text = $"myIPV4: {_ipv4_}\nserverIP:{serverIP}\nport:{serverPort}\ndefault_gatwway: {default_gateway}";
             nick = nickname;
             label1.Text = $"Witaj {nick}";
             string msgtxt = $"Uruchamianie klienta\nIP:{serverIP}, port:{serverPort}";
@@ -68,6 +64,11 @@ namespace klient
             app = new TcpClientApp(nick, serverIP, serverPort, ref richTextBox1, myIP);
             messageBox = richTextBox2;
             StopClient.stopClient = false;
+        }
+
+        public void initialiseConnection()
+        {
+           
         }
 
         private void Form2_Load(object sender, EventArgs e)
@@ -89,12 +90,19 @@ namespace klient
 
         private void richTextBox2_TextChanged(object sender, EventArgs e)
         {
-
+            plainText = richTextBox2.Text;
         }
         // send message --------------------------------------------------------------------------
         private void button1_Click(object sender, EventArgs e)
         {
-            string plainText = messageBox.Text;
+            if (!TcpClientApp.IsConnected())
+            {
+                MessageBox.Show($"[Form2] [2406190127] Brak polaczania z serwerem! {serverIP}", "Blad!",
+                                                         MessageBoxButtons.OK,
+                                                         MessageBoxIcon.Question);
+                return; 
+            }
+            plainText = messageBox.Text;
             if (adresat == "")
             {
                 return;
@@ -129,13 +137,11 @@ namespace klient
             string message = "action";
             string adresat = "serwer";
             string action = "logout";
-
-            MessagePort messagePort = new MessagePort(nick, message, adresat, action, myIP);
-
-            app.sendMessage(messagePort);
-
-            //app.stopTheTread();
-            //StopClient.stopClient = true;
+            if (TcpClientApp.IsConnected())
+            {
+                MessagePort messagePort = new MessagePort(nick, message, adresat, action, myIP);
+                app.sendMessage(messagePort);
+            }
             Form form1 = new Form1();
             form1.Show();
             Close(); // form2.Close();
@@ -155,6 +161,13 @@ namespace klient
         // request crypted chat -------------------------------
         private void button3_Click(object sender, EventArgs e)
         {
+            if (!TcpClientApp.IsConnected())
+            {
+                MessageBox.Show($"[Form2] [2406190131] Brak polaczania z serwerem! {serverIP}", "Blad!",
+                                                         MessageBoxButtons.OK,
+                                                         MessageBoxIcon.Question);
+                return;
+            }
             if (adresat == "")
             {
                 MessageBox.Show($"Prosze wprowadzic nazwe uzytkownika", "Informacja!",

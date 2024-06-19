@@ -18,6 +18,7 @@ using System.Linq.Expressions;
 using System.Net.NetworkInformation;
 using System.Linq;
 using System.Windows.Forms.VisualStyles;
+using System.Runtime.CompilerServices;
 
 
 class TcpServer
@@ -25,7 +26,7 @@ class TcpServer
 
     static RichTextBox textbox = null;
 
-    private static List<ClientHandler> clients = new List<ClientHandler>();
+    public static List<ClientHandler> clients = new List<ClientHandler>();
     private static readonly object lockObject = new object();
     public string ipServer = "";
     public string defaultGateway = "";
@@ -129,6 +130,8 @@ class TcpServer
         }
     }
 
+
+
     public static void RemoveClient(ClientHandler clientHandler)
     {
         lock (lockObject)
@@ -142,7 +145,7 @@ class ClientHandler
 {
     static RichTextBox textbox = null;
 
-    private TcpClient client;
+    public TcpClient client;
     private NetworkStream stream;
     private string clientName;
     private bool logedOut = false; 
@@ -154,6 +157,25 @@ class ClientHandler
         this.client = client;
         this.stream = client.GetStream();
         textbox = tx; 
+    }
+
+    // ta funkcja jest potrzebna gdy serwer zostanie odpalony w czasie gdy klient jest caly czas zalogowany
+    // wowczas klient serwerowi moze przeslac dane a serwer nie ma przypisanego klienta do siebie
+    // no i problem jest taki ze jak sie odpali serwer a klient polaczony wysle wiadomosc 
+    // to jego nick jest zapisywany jako ta waidomosc czyli <START> i reszta jsona
+    public void checkClient(ClientHandler recipient, string clientName)
+    {
+            //ClientHandler check = TcpServer.clients.Find(c => c.ClientName == recipient.clientName);
+            ClientHandler check = TcpServer.clients.Find(c => c.ClientName == clientName);
+        if (check != null)
+            {
+            
+            info($"[Server] Ja mam w slowniku odnosnie ciebie nazwe {recipient.clientName}, ale skoro to Ty {clientName} to go sobie nadpisze");
+            recipient.clientName = clientName;
+            TcpServer.clients.Add(recipient);
+            //this = recipient;   
+             this.client = recipient.client;
+        }
     }
 
     // Funckja do wyswietlania lgoow w textboxie serwera
@@ -193,6 +215,7 @@ class ClientHandler
         {
             while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) != 0) // ta petla dziala caly czas w trakcie dzialania serwera
             {
+
                 // serwer odczytuje wiadomosc 
                 string receivedData = Encoding.ASCII.GetString(buffer, 0, bytesRead);
                 messageBuilder.Append(receivedData);
@@ -202,15 +225,17 @@ class ClientHandler
 
                 if (startIndex != -1 && endIndex != -1 && startIndex < endIndex)
                 {
-                    
                     string jsonMessage = completeMessage.Substring(startIndex + 7, endIndex - startIndex - 7); // usuwam znaczniki json z poczatku i z konca
                     
                     // deserializacja wiadomosci od uzytkownika na obiekt w ktorym trzymam dane jakie chce
                     MessagePort message = JsonSerializer.Deserialize<MessagePort>(jsonMessage);
-                    
+
+                    checkClient(this, message.kto_przesyla);
+
                     // akcja serwera wobec wiadomosci
                     if (message == null) 
                     {
+                        info($"message == null");
                         return;
                     }
                     string sender_action = message.action;              // zeby to bylo poprawnie przypisane wazne zeby messagePort mial get; set;

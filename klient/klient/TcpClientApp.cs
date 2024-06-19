@@ -22,6 +22,7 @@ using System.Xml.Schema;
 using System.Security;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 using System.Net.NetworkInformation;
+using System.Net.Http;
 
 
 namespace klient
@@ -36,24 +37,29 @@ namespace klient
 
     class TcpClientApp
     {
+        public static TcpClient client;
         static RichTextBox textbox = null; 
         string clientIP = "";
-        int port = 5000;
+        public static int port = 5000;
         static NetworkStream gloabalStream = null;
-        bool connected = false;
+        public static bool connected = false;
         string clientName;
+        static string clientNameStatic; 
         string serverIP;
+        static System.Net.IPAddress address;  // tez server ip ale w odpowiedniej formie  "192.168.56.1" // 127.0.0.1
         public static bool StopTheClient = false;
         Thread receiveThread = null;
         static string myIP = "0";
         //public static DiffieHellmanData diffieData = null;
         public static Dictionary<string, DiffieHellmanData> dict = null; // slownik key: "uztykownik", value: "dane do diffie helman"
+        
 
         public TcpClientApp(string clientName, string _ip_, int portAddr, ref RichTextBox textboxAddr,string _myIP)
         {
             this.clientName = clientName;
+            clientNameStatic = clientName;
             this.serverIP = _ip_;
-            this.port = portAddr;
+            port = portAddr;
             textbox = textboxAddr;
             textboxAddr.AppendText("[TcpClientapp]: nawiazywanie polacznia\n");
             myIP = _myIP;
@@ -102,9 +108,25 @@ namespace klient
             info(m);
         }
 
+        public void connectToTheServer(ref TcpClient client, ref bool connected, IPAddress address, int port)
+        {
+            try
+            {
+                client.Connect(address, port);
+                connected = true;
+                string msgtxt = "Połączono z serwerem\n";
+                textbox.AppendText(msgtxt);
+            }
+            catch (Exception e)
+            {
+                sendTxErrorMessage("[2406190008] Nawiazaywanie polaczenia nie powiodlo sie: oto pelna tres bledu: "+e.ToString());
+                return;
+            }
+        }
+
         public void main()
         {
-            System.Net.IPAddress address;  //  "192.168.56.1" // 127.0.0.1
+            
 
             try
             {
@@ -120,26 +142,40 @@ namespace klient
             }
 
 
-            TcpClient client = new TcpClient();
+
+
+
+            client = new TcpClient();
+
+            connectToTheServer(ref client, ref connected, address, port);
+
+            //try
+            //{
+            //    client.Connect(address, port);
+            //    //client.Connect("127.0.0.1", 5000);
+            //    connected = true;
+            //    string msgtxt = "Połączono z serwerem\n";
+            //    textbox.AppendText(msgtxt);
+            //}
+            //catch (Exception e)
+            //{
+            //    sendTxErrorMessage(e.ToString());
+            //    return;
+            //}
+
+            if(!connected)
+            {
+                //System.Threading.Thread.Sleep(200);
+                //connectToTheServer(ref client, ref connected, address, port);
+                info("[TcpClientApp] nie jestes podlaczony");
+                return;
+            }
 
             dict = new Dictionary<string, DiffieHellmanData>();  // klient ma swoj slownik wraz se swoimi wartosciami oraz innyi ludzmi  
 
-            try
-            {
-                client.Connect(address, port);
-            }
-            catch (Exception e)
-            {
-                sendTxErrorMessage(e.ToString());
-                return; 
-            }
-
             NetworkStream stream = client.GetStream();
             gloabalStream = stream;
-            connected = true;
-            string msgtxt = "Połączono z serwerem\n";
-            textbox.AppendText(msgtxt);
-
+            
             // Wysyłanie nazwy klienta do serwera
             byte[] nameData = Encoding.ASCII.GetBytes(clientName);
             stream.Write(nameData, 0, nameData.Length);
@@ -171,10 +207,12 @@ namespace klient
             try
             {
                 gloabalStream.Write(data, 0, data.Length);
-                //gloabalStream.Close();
+                
             }
             catch (Exception e) {
                 sendTxErrorMessage($"[2406122113] sendMessage(): nie moge zsapisac nic do globalstream {e}");
+                gloabalStream.Close();
+                //gloabalStream.Close();
             }
         }
 
@@ -225,6 +263,23 @@ namespace klient
                 sendTxErrorMessage($"[2406131903] innerSendMessage(): nie moge zsapisac nic do globalstream {e}");
             }
         }
+
+
+        // a to jest zrobione na potrzebe gdy klient jest aktywny ale serwer zrestartuje, 
+        // wtedy zanim klient wysle na serwer wiadomosc, to najpierw wysle mu swoj nick 
+        public static void innerSendMessageTextOnly(string myText)
+        {
+            byte[] data = Encoding.ASCII.GetBytes(myText);
+            try
+            {
+                gloabalStream.Write(data, 0, data.Length);
+            }
+            catch (Exception e)
+            {
+                sendTxErrorMessage($"[2406190330] innerSendMessage(): nie moge zsapisac nic do globalstream {e}");
+            }
+        }
+
 
         // wyciaganie ze slownika obiektu DiffieHellmanData, klient robi to np. po to zeby zobaczyc czy ma z drugim klientem
         // szyfrowany czat, proba wyciagania danych dzieje za kazdym razem jak ktos wysle do klienta wiadomosc 
@@ -466,6 +521,7 @@ namespace klient
             {
                 //sendTxErrorMessage($" [2406122129] ReceiveMessages() problem z whilem do receive messages : Blad->> {e}");
                 sendTxErrorMessage("Nastąpiło rozłączenie z serwerem lub do polaczenia nie doszlo");
+                Environment.Exit(0);
             }
 
             
@@ -502,6 +558,74 @@ namespace klient
             }
 
             return string.Empty;
+        }
+
+        public static bool IsConnected()
+        {
+            if(client == null)
+            {
+                client = new TcpClient();
+                bool tryConnectbool = tryConnect();
+                return tryConnectbool;
+            }
+            try
+            {
+                //client = new TcpClient();
+               // client.Connect(address, port);
+                if (client.Connected)
+                {
+                    return true;
+                }
+                else
+                {
+                    client.Close();
+                    bool tryConnectbool = tryConnect();
+                    return tryConnectbool;
+                }
+            }
+            catch (Exception ex)
+            {
+                //Console.WriteLine($"Błąd połączenia: {ex.Message}");
+                return false;
+            }
+        }
+
+        // taki potworek skryptowy, gdy proboje wyslac wiadomosc np. to sprawdzam czy mam polaczenie,
+        // jezeli nie to musze utworzyc nowa istnanncje TcpClient i sprobowac sie polaczyc z serwerem ponownie
+        public static bool tryConnect()
+        {
+            if (client == null)
+            {
+                return false;
+            }
+            try
+            {
+                client = new TcpClient();
+                client.Connect(address, port);
+                NetworkStream stream = client.GetStream();
+                gloabalStream = stream;
+                innerSendMessageTextOnly(clientNameStatic); // przedstaw sie zerwerowi
+                //dict = null; // wyzeruje sobie tez slownik na wypadek gdyby byla krypto message 
+
+                if (client.Connected)  //client.Connected
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                //Console.WriteLine($"Błąd połączenia: {ex.Message}");
+                return false;
+            }
+        }
+        public static bool IsConnected2()
+        {
+            bool networkUp = System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable();
+            return networkUp;
         }
 
     }

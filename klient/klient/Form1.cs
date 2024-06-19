@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics.Eventing.Reader;
 using System.Drawing;
 using System.Linq;
 using System.Net.Sockets;
@@ -59,8 +60,22 @@ namespace klient
                 if (validPort1)
                 {
                     Form form2 = new Form2(nick, serverIP, serverPort);
-                    form2.Show();
-                    Hide(); // form.Hide();
+                    if (TcpClientApp.connected)
+                    {
+                        form2.Show();
+                        Hide(); // form.Hide();
+                    } else
+                    {
+                        MessageBox.Show($"[2406190014] Blad podlaczenia!!", "Blad!",
+                                                         MessageBoxButtons.OK,
+                                                         MessageBoxIcon.Question);
+                    } 
+
+                } else
+                {
+                    MessageBox.Show($"[2406190024] Blad podlaczenia!!", "Blad!",
+                                                         MessageBoxButtons.OK,
+                                                         MessageBoxIcon.Question);
                 }
             }
 
