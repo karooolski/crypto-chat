@@ -28,7 +28,7 @@ namespace klient
         {
             InitializeComponent();
             //myIP = TcpClientApp.GetDefaultGateway().ToString();
-            myIP = TcpClientApp.GetIPV4();
+            myIP = TcpClientApp.GetIPV4_2();
 
             if (_serverIP_ == "_not_defined_" || _serverIP_ == "")
             {
@@ -54,7 +54,7 @@ namespace klient
                 }
 
             }
-            string _ipv4_ = TcpClientApp.GetIPV4();
+            string _ipv4_ = TcpClientApp.GetIPV4_2();
             string default_gateway = TcpClientApp.GetDefaultGateway().ToString();
             richTextBox5.Text = $"myIPV4: {_ipv4_}\nserverIP:{serverIP}\nport:{serverPort}\ndefault_gatwway: {default_gateway}";
             nick = nickname;
@@ -97,7 +97,7 @@ namespace klient
         {
             if (!TcpClientApp.IsConnected())
             {
-                MessageBox.Show($"[Form2] [2406190127] Brak polaczania z serwerem! {serverIP}", "Blad!",
+                MessageBox.Show($"[Form2] [2406190127] Brak polaczania z serwerem! {serverIP}, \n lastError: {TcpClientApp.lastErrorMessage}", "Blad!",
                                                          MessageBoxButtons.OK,
                                                          MessageBoxIcon.Question);
                 return; 
@@ -163,7 +163,7 @@ namespace klient
         {
             if (!TcpClientApp.IsConnected())
             {
-                MessageBox.Show($"[Form2] [2406190131] Brak polaczania z serwerem! {serverIP}", "Blad!",
+                MessageBox.Show($"[Form2] [2406190131] Brak polaczania z serwerem! {serverIP} \nlastError: {TcpClientApp.lastErrorMessage}", "Blad!",
                                                          MessageBoxButtons.OK,
                                                          MessageBoxIcon.Question);
                 return;

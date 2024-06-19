@@ -66,14 +66,14 @@ namespace klient
                         Hide(); // form.Hide();
                     } else
                     {
-                        MessageBox.Show($"[2406190014] Blad podlaczenia!!", "Blad!",
+                        MessageBox.Show($"[2406190014] Blad podlaczenia!!\nlastError: {TcpClientApp.lastErrorMessage}", "Blad!",
                                                          MessageBoxButtons.OK,
                                                          MessageBoxIcon.Question);
                     } 
 
                 } else
                 {
-                    MessageBox.Show($"[2406190024] Blad podlaczenia!!", "Blad!",
+                    MessageBox.Show($"[2406190024] Blad podlaczenia!!\nlastError: {TcpClientApp.lastErrorMessage}", "Blad!",
                                                          MessageBoxButtons.OK,
                                                          MessageBoxIcon.Question);
                 }

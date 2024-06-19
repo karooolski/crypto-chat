@@ -30,7 +30,7 @@ namespace serwer
             InitializeComponent();
             richTextBox1.Text = "[Serwer] Witamy \n";
             textboxGlobal = richTextBox1;
-            richTextBox2.Text = TcpServer.GetServerIPV4();
+            richTextBox2.Text = TcpServer.GetIPV4_2(); // GetServerIPV4
             richTextBox3.Text = TcpServer.GetDefaultGateway().ToString();
             richTextBox4.Text = port;
 
@@ -61,7 +61,7 @@ namespace serwer
         }
 
         // IPV4 ----------------------------------------------------------
-        private void richTextBox2_TextChanged(object sender, EventArgs e)
+        private void richTextBox2_TextChanged(object sender, EventArgs e) // richTextBox2
         {
 
         }

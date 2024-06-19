@@ -59,7 +59,8 @@ class TcpServer
                 })); 
         }
     }
-    public static string GetServerIPV4()
+    // to moze wziac nie to ipv4, np z ethernet 2 co jest zle 
+    public static string GetIPV4()
     {
         IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
 
@@ -70,6 +71,23 @@ class TcpServer
         }
 
         return string.Empty;
+    }
+
+    public static string GetIPV4_2()
+    {
+        try
+        {
+            using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
+            {
+                socket.Connect("10.0.1.20", 1337); // doesnt matter what it connects to
+                IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
+                return (endPoint.Address.ToString()); //ipv4
+            }
+        }
+        catch (Exception e)
+        {
+            return "failed get ipv4";
+        }
     }
 
     public static IPAddress GetDefaultGateway()
@@ -91,7 +109,7 @@ class TcpServer
         TcpListener listener = new TcpListener(IPAddress.Any, port);
         listener.Start();
 
-        ipServer = GetServerIPV4();
+        ipServer = GetIPV4_2(); //  GetIPV4
         defaultGateway = GetDefaultGateway().ToString();
         info($"Adres IP Serwera (IPV4) {ipServer}");
         info($"Default Gateway: " + defaultGateway);

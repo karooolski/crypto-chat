@@ -37,6 +37,7 @@ namespace klient
 
     class TcpClientApp
     {
+        public static string lastErrorMessage = "Brak error message"; // zmienna pod forma zeby mogl wyswietlic message box z trescia bledu
         public static TcpClient client;
         static RichTextBox textbox = null; 
         string clientIP = "";
@@ -95,6 +96,7 @@ namespace klient
                     }));
                 } catch (Exception e)
                 {
+                    lastErrorMessage = e.ToString();
                     return; 
                 }
                 
@@ -119,6 +121,7 @@ namespace klient
             }
             catch (Exception e)
             {
+                lastErrorMessage = e.ToString();
                 sendTxErrorMessage("[2406190008] Nawiazaywanie polaczenia nie powiodlo sie: oto pelna tres bledu: "+e.ToString());
                 return;
             }
@@ -134,7 +137,7 @@ namespace klient
             }
             catch(Exception e)
             {
-
+                lastErrorMessage = e.ToString();
                 MessageBox.Show($"[2406171936] ustawono zle ip, ip teraz to {serverIP}", "Blad!",
                                                          MessageBoxButtons.OK,
                                                          MessageBoxIcon.Question);
@@ -210,6 +213,7 @@ namespace klient
                 
             }
             catch (Exception e) {
+                lastErrorMessage = e.ToString();
                 sendTxErrorMessage($"[2406122113] sendMessage(): nie moge zsapisac nic do globalstream {e}");
                 gloabalStream.Close();
                 //gloabalStream.Close();
@@ -236,6 +240,7 @@ namespace klient
                 gloabalStream.Write(data, 0, data.Length);
             }
             catch (Exception e) {
+                lastErrorMessage = e.ToString();
                 sendTxErrorMessage($"[2406150115] sendMessage(): nie moge zsapisac nic do globalstream {e}");
             }
         }
@@ -260,6 +265,7 @@ namespace klient
             }
             catch (Exception e)
             {
+                lastErrorMessage = e.ToString();
                 sendTxErrorMessage($"[2406131903] innerSendMessage(): nie moge zsapisac nic do globalstream {e}");
             }
         }
@@ -276,6 +282,7 @@ namespace klient
             }
             catch (Exception e)
             {
+                lastErrorMessage = e.ToString();
                 sendTxErrorMessage($"[2406190330] innerSendMessage(): nie moge zsapisac nic do globalstream {e}");
             }
         }
@@ -292,6 +299,7 @@ namespace klient
                 return data; 
             } catch(KeyNotFoundException e)
             {
+                lastErrorMessage = e.ToString();
                 return null; 
             }
         }
@@ -519,9 +527,10 @@ namespace klient
                 }
             } catch (Exception e)
             {
+                lastErrorMessage = e.ToString();
                 //sendTxErrorMessage($" [2406122129] ReceiveMessages() problem z whilem do receive messages : Blad->> {e}");
                 sendTxErrorMessage("Nastąpiło rozłączenie z serwerem lub do polaczenia nie doszlo");
-                Environment.Exit(0);
+                //Environment.Exit(0);
             }
 
             
@@ -560,7 +569,28 @@ namespace klient
             return string.Empty;
         }
 
-        public static bool IsConnected()
+
+
+public static string GetIPV4_2()
+    {
+
+            try
+        {
+            using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
+            {
+                socket.Connect("10.0.1.20", 1337); // doesnt matter what it connects to
+                IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
+                return (endPoint.Address.ToString()); //ipv4
+            }
+        }
+        catch (Exception e)
+            {
+                lastErrorMessage = e.ToString();
+                return "failed";
+            }
+        }
+
+    public static bool IsConnected()
         {
             if(client == null)
             {
@@ -583,9 +613,10 @@ namespace klient
                     return tryConnectbool;
                 }
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                //Console.WriteLine($"Błąd połączenia: {ex.Message}");
+                lastErrorMessage = e.ToString();
+                //Console.WriteLine($"Błąd połączenia: {e.Message}");
                 return false;
             }
         }
@@ -604,7 +635,12 @@ namespace klient
                 client.Connect(address, port);
                 NetworkStream stream = client.GetStream();
                 gloabalStream = stream;
-                innerSendMessageTextOnly(clientNameStatic); // przedstaw sie zerwerowi
+
+                // Wysyłanie nazwy klienta do serwera
+                byte[] nameData = Encoding.ASCII.GetBytes(clientNameStatic);
+                stream.Write(nameData, 0, nameData.Length); // przedstaw sie serwerowi poraz drugi
+
+                //innerSendMessageTextOnly(clientNameStatic); // przedstaw sie zerwerowi
                 //dict = null; // wyzeruje sobie tez slownik na wypadek gdyby byla krypto message 
 
                 if (client.Connected)  //client.Connected
@@ -618,6 +654,7 @@ namespace klient
             }
             catch (Exception ex)
             {
+                lastErrorMessage = ex.ToString();
                 //Console.WriteLine($"Błąd połączenia: {ex.Message}");
                 return false;
             }
