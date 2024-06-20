@@ -56,10 +56,11 @@ namespace klient
             }
             string _ipv4_ = TcpClientApp.GetIPV4_2();
             string default_gateway = TcpClientApp.GetDefaultGateway().ToString();
+            string msgtxt = $"Uruchamianie klienta\nIP:{serverIP}, port:{serverPort}";
+
             richTextBox5.Text = $"myIPV4: {_ipv4_}\nserverIP:{serverIP}\nport:{serverPort}\ndefault_gatwway: {default_gateway}";
             nick = nickname;
             label1.Text = $"Witaj {nick}";
-            string msgtxt = $"Uruchamianie klienta\nIP:{serverIP}, port:{serverPort}";
             richTextBox1.AppendText(msgtxt);
             app = new TcpClientApp(nick, serverIP, serverPort, ref richTextBox1, myIP);
             messageBox = richTextBox2;
@@ -119,25 +120,25 @@ namespace klient
             {
                 return;
             }
-            DiffieHellmanData diffieHellman = TcpClientApp.getMyDataAbout(adresat);
+            DiffieHellmanData diffieData = TcpClientApp.getMyDataAbout(adresat);
 
             //TcpClientApp.gloabalStream.Flush();
 
-            if (diffieHellman == null) // czat nie jest szyfrowany wiec tylko wysylam wiadomosc 
-            {
+            if (diffieData == null) // czat nie jest szyfrowany wiec tylko wysylam wiadomosc
+            {                       // diffie data tworzy sie dopiero gdy ktos mi przesle wiadomosc i wtedy moge sobie zapisac go w slowniku 
                 MessagePort newMessage = new MessagePort(nick, plainText, adresat, myIP);
                 app.sendMessage(newMessage);
             }
-            else if (diffieHellman != null)
+            else if (diffieData != null)
             {
-                if (diffieHellman.allowEncryptedChat)
+                if (diffieData.allowEncryptedChat) 
                 {
-                    string key = diffieHellman.getK().ToString(); ;
+                    string key = diffieData.getK().ToString(); ;
                     string ecnrypted = AES.Encrypt(plainText, key);
                     MessagePort newMessage = new MessagePort(nick, ecnrypted, adresat, myIP);
                     app.sendCryptoMessage(newMessage, plainText);
                 }
-                else
+                else // to sie dzieje gdy 1) otrzymales od kogos wiaomosc lub gdy 2) dopiero ustalasz klucz prywatny, masz diffie data ale nie wsztko policzone
                 {
                    MessagePort newMessage = new MessagePort(nick, plainText, adresat, myIP);
                    app.sendMessage(newMessage);
@@ -183,7 +184,7 @@ namespace klient
                 return;
             }
 
-            if (TcpClientApp.servrBreakup)
+            if (TcpClientApp.servrBreakup) // to jest gdy serwer sie znowu wlaczy i sie laczysz przy wyslaniu wiadmosci
             {
                 MessageBox.Show($"[TclCientApp]: Pomyslnie polaczono z serwerem, prosze wyslac wiadomosc jeszcze raz!", "Blad!",
                                  MessageBoxButtons.OK,

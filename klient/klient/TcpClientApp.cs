@@ -190,7 +190,7 @@ namespace klient
                 return;
             }
             
-            info($"$$$$ [TY]: {messagePort.message} do {messagePort.adresat}: "); // w twoim oknie pojawia się twoja wiadomosc // {clientName}
+            info($"$$$$ [TY] do [{messagePort.adresat}]: {messagePort.message}"); // w twoim oknie pojawia się twoja wiadomosc // {clientName}
 
             //MessagePort messagePort = new MessagePort(clientName, message, adresat, action);
             string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
@@ -211,7 +211,7 @@ namespace klient
 
         /// <summary>
         /// ta funkcja tak strikte dla klienta, jak wysylasz zaszyfrowana wiadomosc to dla ciebie sie pojawia plaintext w texboxie
-        /// a na serwer wysylana jest wiadomosc zaszyfrowana
+        /// a na serwer wysylana jest wiadomosc zaszyfrowana, ktora szyfrowalem w Form2 w akcji przycisku send message
         /// </summary>
         /// <param name="messagePort"></param>
         /// <param name="plainTextMessage"></param>
@@ -221,7 +221,7 @@ namespace klient
             {
                 return;
             }
-            info($"$$$$ [TY]: {plainTextMessage} do {messagePort.adresat}: "); // w twoim oknie pojawia się twoja wiadomosc // {clientName}
+            info($"$$$$ [TY] do [{messagePort.adresat}]: {plainTextMessage}  "); // w twoim oknie pojawia się twoja wiadomosc // {clientName}
             string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
             byte[] data = Encoding.ASCII.GetBytes(jsonMessage);
             try {
@@ -365,7 +365,9 @@ namespace klient
                             // (klient 1 wyslal wiadomosc z requestem z poziomu buttona wiec kod jego jest w From2.cs)
                             // w tym ifie: klient 2 odbiera wiadomosc od klient1 wraz z akcja requestEncryptedChat
 
-                            info($"(requestEncryptedChat) Odebralem: {jsonMessage}");
+                            info("-------- D I F F I E - H E L L M A N --------");
+
+                            //info($"(requestEncryptedChat) Odebralem: {jsonMessage}");
                             string infos = $"Uzytkownik {ktoNapisal} prosi ciebie o ustanowienia szyfrowanego czatu";
                             info(infos);
                             string message0 = infos;
@@ -424,6 +426,8 @@ namespace klient
                         {
                             // klient1, po tym jak otrzymal zgode od drugiego uzytkownika na polaczenie krypto, oraz dostal od niego z powrotem liczbe pierwsza
                             // teraz ten klient musi obliczyc u siebie tyle ile sie da - az do klucza publicznego, ktorego przesle na koniec tego ifa
+
+                            info("-------- D I F F I E - H E L L M A N --------");
 
                             string klient = messagePort.adresat; 
 

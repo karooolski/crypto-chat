@@ -33,7 +33,6 @@
             richTextBox2 = new System.Windows.Forms.RichTextBox();
             button1 = new System.Windows.Forms.Button();
             richTextBox3 = new System.Windows.Forms.RichTextBox();
-            richTextBox4 = new System.Windows.Forms.RichTextBox();
             richTextBox5 = new System.Windows.Forms.RichTextBox();
             button2 = new System.Windows.Forms.Button();
             label2 = new System.Windows.Forms.Label();
@@ -55,6 +54,7 @@
             // 
             // richTextBox1
             // 
+            richTextBox1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             richTextBox1.BackColor = System.Drawing.SystemColors.Info;
             richTextBox1.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             richTextBox1.Location = new System.Drawing.Point(23, 32);
@@ -67,7 +67,9 @@
             // 
             // richTextBox2
             // 
+            richTextBox2.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             richTextBox2.BackColor = System.Drawing.SystemColors.InactiveCaption;
+            richTextBox2.Cursor = System.Windows.Forms.Cursors.IBeam;
             richTextBox2.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             richTextBox2.Location = new System.Drawing.Point(287, 313);
             richTextBox2.Name = "richTextBox2";
@@ -78,6 +80,7 @@
             // 
             // button1
             // 
+            button1.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             button1.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             button1.Location = new System.Drawing.Point(515, 355);
             button1.Name = "button1";
@@ -89,7 +92,9 @@
             // 
             // richTextBox3
             // 
+            richTextBox3.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             richTextBox3.BackColor = System.Drawing.SystemColors.GradientActiveCaption;
+            richTextBox3.Cursor = System.Windows.Forms.Cursors.IBeam;
             richTextBox3.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             richTextBox3.Location = new System.Drawing.Point(91, 323);
             richTextBox3.Name = "richTextBox3";
@@ -98,21 +103,12 @@
             richTextBox3.Text = "";
             richTextBox3.TextChanged += richTextBox3_TextChanged;
             // 
-            // richTextBox4
-            // 
-            richTextBox4.BackColor = System.Drawing.SystemColors.GradientActiveCaption;
-            richTextBox4.Location = new System.Drawing.Point(643, 362);
-            richTextBox4.Name = "richTextBox4";
-            richTextBox4.Size = new System.Drawing.Size(146, 30);
-            richTextBox4.TabIndex = 5;
-            richTextBox4.Text = "";
-            richTextBox4.TextChanged += richTextBox4_TextChanged;
-            // 
             // richTextBox5
             // 
+            richTextBox5.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             richTextBox5.BackColor = System.Drawing.SystemColors.GradientActiveCaption;
             richTextBox5.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            richTextBox5.Location = new System.Drawing.Point(643, 352);
+            richTextBox5.Location = new System.Drawing.Point(642, 348);
             richTextBox5.Name = "richTextBox5";
             richTextBox5.ReadOnly = true;
             richTextBox5.Size = new System.Drawing.Size(146, 54);
@@ -122,6 +118,7 @@
             // 
             // button2
             // 
+            button2.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             button2.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             button2.Location = new System.Drawing.Point(715, 408);
             button2.Name = "button2";
@@ -133,6 +130,7 @@
             // 
             // label2
             // 
+            label2.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             label2.AutoSize = true;
             label2.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             label2.Location = new System.Drawing.Point(24, 326);
@@ -144,6 +142,7 @@
             // 
             // button3
             // 
+            button3.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             button3.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             button3.Location = new System.Drawing.Point(102, 362);
             button3.Name = "button3";
@@ -155,6 +154,7 @@
             // 
             // button4
             // 
+            button4.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             button4.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             button4.Location = new System.Drawing.Point(715, 311);
             button4.Name = "button4";
@@ -175,7 +175,6 @@
             Controls.Add(label2);
             Controls.Add(button2);
             Controls.Add(richTextBox5);
-            Controls.Add(richTextBox4);
             Controls.Add(richTextBox3);
             Controls.Add(button1);
             Controls.Add(richTextBox2);
@@ -195,7 +194,6 @@
         private System.Windows.Forms.RichTextBox richTextBox2;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.RichTextBox richTextBox3;
-        private System.Windows.Forms.RichTextBox richTextBox4;
         private System.Windows.Forms.RichTextBox richTextBox5;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Label label2;

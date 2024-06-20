@@ -51,7 +51,8 @@ class TcpServer
         if (textbox != null)
         {
             //textbox.Text += "[TcpServer] " + message + "\n"; // tak sie nie robi tutaj
-            string fullMessage = "[TcpServer] " + message + "\n";
+            string time = Time.getCurrentTime();
+            string fullMessage = $"[TcpServer] {time} -> {message} \n";
                 textbox.Invoke(new Action(delegate ()
                 {
                     textbox.AppendText(Convert.ToString(fullMessage));
@@ -119,13 +120,15 @@ class TcpServer
         while (true)
         {
             TcpClient client = listener.AcceptTcpClient();
-            
             ClientHandler clientHandler = new ClientHandler(client, ref textbox);
-            info($"przypisuje clienta {clientHandler.ClientName}"); // wroc
+
+            //info($"przypisuje clienta {clientHandler.ClientName}");
+            
             lock (lockObject)                                       // zabezpieczenie przed dostepem roznych watkow
             {
                 clients.Add(clientHandler);
             }
+            
             Thread clientThread = new Thread(clientHandler.Handle); // handlowanie wiadomosci (przechwytywanie) 
             clientThread.Start();
         }
@@ -144,7 +147,11 @@ class TcpServer
             }
             else
             {
-                string msg = $"[TcpSerwer] Klient {messagePort.adresat} jest niedostępny";
+                string adresat = messagePort.adresat;
+                string senderName = sender.ClientName;
+                string msg = $"[TcpSerwer] Klient {adresat} jest niedostępny";
+                string infomsg = $"zwracam informacje dla {senderName}, ze {adresat} jest niedostepny.";
+                info(infomsg);
                 sender.SendMessage(msg,sender.ClientName, messagePort.myIP);
                 //sender.SendMessage($"<START>{{\"Message\":\"Klient '{message.adresat}' nie jest dostępny\",\"Adresat\":\"{sender.ClientName}\",\"KtoPrzesyla\":\"Server\"}}<END>");
             }
@@ -185,7 +192,8 @@ class ClientHandler
         {
             try
             {
-                string fullMessage = "[TcpServer] " + message + "\n";
+                string time = Time.getCurrentTime();
+                string fullMessage = $"[TcpServer] {time} -> {message} \n";
                 textbox.Invoke(new Action(delegate ()    // takie cos bo watki kluca sie o referencje do textboxa 
                 {
                     textbox.AppendText(Convert.ToString(fullMessage));
@@ -195,7 +203,6 @@ class ClientHandler
                 // nic nie rob // nie mam gdzie pokazac w tym miejscuu tego bledu 
             }
         }
-
     }
 
     // przechwytywanie wiadomosci 
@@ -214,7 +221,7 @@ class ClientHandler
         clientName = Encoding.ASCII.GetString(buffer, 0, bytesRead).Trim(); // Pobierz nazwę klienta
         StringBuilder messageBuilder = new StringBuilder();
 
-        //info($"odczyt clientname z buffera: {clientName} połączony.");
+        info($"{clientName} połączony.");
 
         try
         {
@@ -244,10 +251,14 @@ class ClientHandler
                     }
                     string sender_action = message.action;              // zeby to bylo poprawnie przypisane wazne zeby messagePort mial get; set;
 
-                    info($"Odebrano od {clientName}: {jsonMessage}\n");   // pokazuje w texboxie caly json 
+                    info($"Odebrano od {clientName}: \n{jsonMessage}\n");   // pokazuje w texboxie caly json 
 
                     bool allow_send_forward_message = actionBetweenUsers(sender_action);
 
+                    if (sender_action == "requestEncryptedChat") // to jest na potrzeby pokazania projektu
+                    {
+                        info(" -------------- TUTAJ SIE ZACZYNA DIFFIE HELLMAN --------------");
+                    }
                     if (allow_send_forward_message)                     // tutaj okreslam dozwolone akcje jakie serwer przesyla dalej miedzy uzytkownikami
                     {
                         TcpServer.BroadcastMessage(message, this);      // this czyli ClientHandler, przesyla sam siebie
@@ -320,4 +331,5 @@ class ClientHandler
         }
         return false;
     }
+
 }

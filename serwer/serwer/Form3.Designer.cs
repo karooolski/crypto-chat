@@ -41,6 +41,7 @@
             // 
             // richTextBox1
             // 
+            richTextBox1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             richTextBox1.BackColor = System.Drawing.SystemColors.InfoText;
             richTextBox1.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             richTextBox1.ForeColor = System.Drawing.SystemColors.Window;
@@ -55,6 +56,7 @@
             // 
             // button1
             // 
+            button1.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             button1.Location = new System.Drawing.Point(713, 415);
             button1.Name = "button1";
             button1.Size = new System.Drawing.Size(75, 23);
@@ -65,6 +67,7 @@
             // 
             // button2
             // 
+            button2.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             button2.Location = new System.Drawing.Point(632, 415);
             button2.Name = "button2";
             button2.Size = new System.Drawing.Size(75, 23);
@@ -75,6 +78,7 @@
             // 
             // richTextBox2
             // 
+            richTextBox2.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             richTextBox2.BackColor = System.Drawing.SystemColors.MenuText;
             richTextBox2.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             richTextBox2.ForeColor = System.Drawing.SystemColors.Window;
@@ -88,6 +92,7 @@
             // 
             // richTextBox3
             // 
+            richTextBox3.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             richTextBox3.BackColor = System.Drawing.SystemColors.InfoText;
             richTextBox3.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             richTextBox3.ForeColor = System.Drawing.Color.White;
@@ -101,6 +106,7 @@
             // 
             // label1
             // 
+            label1.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             label1.AutoSize = true;
             label1.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             label1.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
@@ -112,6 +118,7 @@
             // 
             // label2
             // 
+            label2.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             label2.AutoSize = true;
             label2.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             label2.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
@@ -123,6 +130,7 @@
             // 
             // richTextBox4
             // 
+            richTextBox4.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             richTextBox4.BackColor = System.Drawing.SystemColors.InfoText;
             richTextBox4.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             richTextBox4.ForeColor = System.Drawing.Color.White;
@@ -136,6 +144,7 @@
             // 
             // label3
             // 
+            label3.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             label3.AutoSize = true;
             label3.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             label3.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
