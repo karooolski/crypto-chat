@@ -5,6 +5,8 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
+// skrypt do potegowania wartosci typu BigInteger
+
 namespace klient
 {
     public class SelfPower {

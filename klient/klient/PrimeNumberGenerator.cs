@@ -6,6 +6,9 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
+// skrypt zrbiony na potrzeby metody diffie hellman
+// losowanie liczby pierwszej 
+
 namespace klient
 {
     public class PrimeNumberGenerator

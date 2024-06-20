@@ -10,10 +10,10 @@ using System.Numerics;
 
 
 // 2024 06 13 20 37
-// podsatawa tego skryotu jest implementacja algorytm,u diffie hemlan
-// pierw ala przesyla do olo liczbe pierwsa p
-// obie strony ustalaja podstawe inaczej zwana g albo primitive root czyli prymitywny pierwiastek : g
-// i ten g wlasie jest wyznaczany w tym skrypcie
+// podsatawa tego skryptu jest implementacja algorytmu diffie hemlan,
+// pierw Alice przesyla do Boba liczbe pierwsa p
+// obie strony ustalaja podstawe inaczej zwana g albo inczej "primitive root" czyli prymitywny pierwiastek : g
+// i ten "g" wlasie jest wyznaczany w tym skrypcie
 
 namespace klient
 {

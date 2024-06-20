@@ -42,16 +42,15 @@ class TcpServer
         catch (Exception e)
         {
             port = 5000;
-          info($"Nastapil bload podczas ladowania portu, port zostal ustawiny na 5000!, pelna tresc bledu: {e}");
+            info($"-> TcpServer() : Nastapil blad podczas ladowania portu, port zostal ustawiny na 5000!, \npelna tresc bledu: {e}");
         }
-        //info($"Port serwera: {port}");
     }
 
     public static void info(string message)
     {
         if (textbox != null)
         {
-            //textbox.Text += "[TcpServer] " + message + "\n";
+            //textbox.Text += "[TcpServer] " + message + "\n"; // tak sie nie robi tutaj
             string fullMessage = "[TcpServer] " + message + "\n";
                 textbox.Invoke(new Action(delegate ()
                 {
@@ -59,6 +58,7 @@ class TcpServer
                 })); 
         }
     }
+    
     // to moze wziac nie to ipv4, np z ethernet 2 co jest zle 
     public static string GetIPV4()
     {
@@ -73,6 +73,7 @@ class TcpServer
         return string.Empty;
     }
 
+    // poprawne odczytywanie IPV4
     public static string GetIPV4_2()
     {
         try
@@ -150,8 +151,6 @@ class TcpServer
         }
     }
 
-
-
     public static void RemoveClient(ClientHandler clientHandler)
     {
         lock (lockObject)
@@ -179,27 +178,6 @@ class ClientHandler
         textbox = tx; 
     }
 
-    // ta funkcja jest potrzebna gdy serwer zostanie odpalony w czasie gdy klient jest caly czas zalogowany
-    // wowczas klient serwerowi moze przeslac dane a serwer nie ma przypisanego klienta do siebie
-    // no i problem jest taki ze jak sie odpali serwer a klient polaczony wysle wiadomosc 
-    // to jego nick jest zapisywany jako ta waidomosc czyli <START> i reszta jsona
-    public bool checkClient(ClientHandler recipient, string clientName)
-    {
-            //ClientHandler check = TcpServer.clients.Find(c => c.ClientName == recipient.clientName);
-            ClientHandler check = TcpServer.clients.Find(c => c.ClientName == clientName);
-        if (check != null)
-            {
-            
-            info($"[Server] Ja mam w slowniku odnosnie ciebie nazwe {recipient.clientName}, ale skoro to Ty {clientName} to go sobie nadpisze");
-            recipient.clientName = clientName;
-            TcpServer.clients.Add(recipient);
-            //this = recipient;   
-             this.client = recipient.client;
-            return true;
-        }
-        return false;
-    }
-
     // Funckja do wyswietlania lgoow w textboxie serwera
     public static void info(string message)
     {
@@ -208,7 +186,7 @@ class ClientHandler
             try
             {
                 string fullMessage = "[TcpServer] " + message + "\n";
-                textbox.Invoke(new Action(delegate ()    // takie cos bo watki kluca sie o textbox 
+                textbox.Invoke(new Action(delegate ()    // takie cos bo watki kluca sie o referencje do textboxa 
                 {
                     textbox.AppendText(Convert.ToString(fullMessage));
                 }));
@@ -227,21 +205,16 @@ class ClientHandler
         int bytesRead;
 
         this.stream = client.GetStream();
-
-        stream.Flush();
-        // Pobierz nazwę klienta
+        
         bytesRead = stream.Read(buffer, 0, buffer.Length);
 
-        string bytesreadstr = Convert.ToBase64String(buffer);
-        info($"odczyt buffera: {bytesreadstr}");
+        //string bytesreadstr = Convert.ToBase64String(buffer); // badanie strumienia bajtow przesylanych na serwer
+        //info($"odczyt buffera: {bytesreadstr}");
         
-
-        clientName = Encoding.ASCII.GetString(buffer, 0, bytesRead).Trim();
+        clientName = Encoding.ASCII.GetString(buffer, 0, bytesRead).Trim(); // Pobierz nazwę klienta
         StringBuilder messageBuilder = new StringBuilder();
 
-        info($"odczyt clientname z buffera: {clientName} połączony.");
-
-        
+        //info($"odczyt clientname z buffera: {clientName} połączony.");
 
         try
         {
@@ -262,13 +235,6 @@ class ClientHandler
                     
                     // deserializacja wiadomosci od uzytkownika na obiekt w ktorym trzymam dane jakie chce
                     MessagePort message = JsonSerializer.Deserialize<MessagePort>(jsonMessage);
-
-                    bool chckclient = checkClient(this, message.kto_przesyla);
-                    if (chckclient)
-                    {
-                        this.clientName = message.kto_przesyla;
-                    }
-
 
                     // akcja serwera wobec wiadomosci
                     if (message == null) 
@@ -302,13 +268,12 @@ class ClientHandler
                     {
                         info("Wychwycilem nieoblsugiwana akcje! ");
                     }
-                    stream.Flush();
                 }
             }
         }
         catch (Exception e)
         {
-            info($"[2406130311] Błąd: {e.Message}");
+            info($"[2406130311] Błąd: \n{e.Message}");
         }
         finally
         {
@@ -325,14 +290,12 @@ class ClientHandler
         string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
         byte[] data = Encoding.ASCII.GetBytes(jsonMessage);
         stream.Write(data, 0, data.Length);
-        stream.Flush();
     }
     public void SendMessage(MessagePort messagePort)
     {
         string jsonMessage = "<START>" + JsonSerializer.Serialize(messagePort) + "<END>";
         byte[] data = Encoding.ASCII.GetBytes(jsonMessage);
         stream.Write(data, 0, data.Length);
-        stream.Flush();
     }
 
     /// <summary>
@@ -348,7 +311,7 @@ class ClientHandler
 
         };
 
-        foreach (string obj in actions) // patrzymy czy przslana akcja zgadza sie z dozwolonymi akcjami
+        foreach (string obj in actions) // patrzye czy przslana akcja zgadza sie z dozwolonymi akcjami
         {
             if (obj == action)
             {

@@ -121,7 +121,7 @@ namespace klient
             }
             DiffieHellmanData diffieHellman = TcpClientApp.getMyDataAbout(adresat);
 
-            TcpClientApp.gloabalStream.Flush();
+            //TcpClientApp.gloabalStream.Flush();
 
             if (diffieHellman == null) // czat nie jest szyfrowany wiec tylko wysylam wiadomosc 
             {

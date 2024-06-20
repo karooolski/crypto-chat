@@ -88,11 +88,12 @@
             label2.AutoSize = true;
             label2.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             label2.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            label2.Location = new System.Drawing.Point(290, 374);
+            label2.Location = new System.Drawing.Point(338, 373);
             label2.Name = "label2";
-            label2.Size = new System.Drawing.Size(218, 21);
+            label2.Size = new System.Drawing.Size(129, 21);
             label2.TabIndex = 5;
-            label2.Text = "Server IP (default gateway)";
+            label2.Text = "Server IP (IPV4)";
+            label2.Click += label2_Click;
             // 
             // Form1
             // 

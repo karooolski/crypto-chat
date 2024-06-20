@@ -17,13 +17,14 @@ namespace serwer
     {
 
         String nick;
-        string port; 
+        string port;
 
         public Form1()
         {
             InitializeComponent();
             richTextBox1.Text = "5000";
-            richTextBox2.Text = TcpServer.GetDefaultGateway().ToString(); //GetServerIPV4();
+            //richTextBox2.Text = TcpServer.GetDefaultGateway().ToString(); //GetServerIPV4();
+            richTextBox2.Text = TcpServer.GetIPV4_2();
         }
 
         public static string GetServerIPV4()
@@ -66,7 +67,12 @@ namespace serwer
 
         }
 
-        private void richTextBox2_TextChanged(object sender, EventArgs e)
+        private void richTextBox2_TextChanged(object sender, EventArgs e) // richTextBox2
+        {
+
+        }
+
+        private void label2_Click(object sender, EventArgs e)
         {
 
         }

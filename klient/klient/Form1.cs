@@ -33,6 +33,7 @@ namespace klient
             }
             else
             {
+                TcpClientApp.lastErrorMessage = "[Form1] -> ValidateContact() -> Walidacja portu wykazala nieprawidlowosci"; 
                 return false;
             }
         }
@@ -66,16 +67,12 @@ namespace klient
                         Hide(); // form.Hide();
                     } else
                     {
-                        MessageBox.Show($"[2406190014] Blad podlaczenia!!\nlastError: {TcpClientApp.lastErrorMessage}", "Blad!",
-                                                         MessageBoxButtons.OK,
-                                                         MessageBoxIcon.Question);
+                        MessageBox.Show($"[Form1] [2406190014] Blad podlaczenia!!\nlastError: {TcpClientApp.lastErrorMessage}", "Blad!", MessageBoxButtons.OK, MessageBoxIcon.Question);
                     } 
 
                 } else
                 {
-                    MessageBox.Show($"[2406190024] Blad podlaczenia!!\nlastError: {TcpClientApp.lastErrorMessage}", "Blad!",
-                                                         MessageBoxButtons.OK,
-                                                         MessageBoxIcon.Question);
+                    MessageBox.Show($"[Form1] [2406190024] Blad podlaczenia!!\nlastError: {TcpClientApp.lastErrorMessage}", "Blad!",MessageBoxButtons.OK,MessageBoxIcon.Question);
                 }
             }
 
