@@ -105,6 +105,11 @@ class TcpServer
             .FirstOrDefault();
     }
 
+
+    /// <summary>
+    /// To jest glowna funkcja ktora nasluchuje porty, przechwytuje klienta laczacego sie z serwerem oraz zalacza dla niego nowy watek 
+    /// ktory nasluchuje jego stream miedzy nim a serwerem. 
+    /// </summary>
     public void StartServer()
     {
         
@@ -134,8 +139,13 @@ class TcpServer
         }
     }
 
-    // tutaj patrze czy mam adresata na liscie polaczonych klientow, jezeli tak to wysylam wiadomosc 
-    // jezeli nie daje info do wysylajacego ze adresat nie jest polaczony
+
+    /// <summary>
+    /// Funkcja do sprawdzania czy mam adresata na liscie polaczonych klientow, jezeli tak to wysylam wiadomosc 
+    /// jezeli nie daje info do wysylajacego ze adresat nie jest polaczony
+    /// </summary>
+    /// <param name="messagePort"></param>
+    /// <param name="sender"></param>
     public static void BroadcastMessage(MessagePort messagePort, ClientHandler sender)
     {
         lock (lockObject)
@@ -145,14 +155,19 @@ class TcpServer
             {
                 recipient.SendMessage(messagePort);
             }
-            else
+            else // adreast wiadomosci nie istnieje, ifnormuje o tym uzytkownika
             {
                 string adresat = messagePort.adresat;
                 string senderName = sender.ClientName;
                 string msg = $"[TcpSerwer] Klient {adresat} jest niedostępny";
                 string infomsg = $"zwracam informacje dla {senderName}, ze {adresat} jest niedostepny.";
                 info(infomsg);
-                sender.SendMessage(msg,sender.ClientName, messagePort.myIP);
+                MessagePort backMessage = new MessagePort();
+                backMessage.message = msg;
+                backMessage.adresat = sender.ClientName;
+                backMessage.myIP = messagePort.myIP;
+                backMessage.kto_przesyla = "Serwer"; 
+                sender.SendMessage(backMessage);
                 //sender.SendMessage($"<START>{{\"Message\":\"Klient '{message.adresat}' nie jest dostępny\",\"Adresat\":\"{sender.ClientName}\",\"KtoPrzesyla\":\"Server\"}}<END>");
             }
         }
@@ -185,7 +200,7 @@ class ClientHandler
         textbox = tx; 
     }
 
-    // Funckja do wyswietlania lgoow w textboxie serwera
+    // Metoda do wyswietlania logow w textboxie serwera
     public static void info(string message)
     {
         if (textbox != null)
@@ -205,7 +220,10 @@ class ClientHandler
         }
     }
 
-    // przechwytywanie wiadomosci 
+    /// <summary>
+    /// To jest funkcja uruchamiana w osobnych watkach, dla kazdego klienta.
+    /// Serwer nasluchuje wiadomosci ze streamu. 
+    /// </summary>
     public async void Handle()
     {
         byte[] buffer = new byte[1024];
@@ -233,14 +251,16 @@ class ClientHandler
                 messageBuilder.Clear(); // to jest wazne zeby wiadomosci starych nie przesylalo po restarcie serwera
                 messageBuilder.Append(receivedData);
                 string completeMessage = messageBuilder.ToString();
-                int startIndex = completeMessage.IndexOf("<START>"); // Sprawdź, czy wiadomość zawiera oba znaczniki
+                int startIndex = completeMessage.IndexOf("<START>"); // sprawdzam, czy wiadomość json zawiera oba znaczniki
                 int endIndex = completeMessage.IndexOf("<END>");
 
                 if (startIndex != -1 && endIndex != -1 && startIndex < endIndex)
                 {
                     string jsonMessage = completeMessage.Substring(startIndex + 7, endIndex - startIndex - 7); // usuwam znaczniki json z poczatku i z konca
-                    
-                    // deserializacja wiadomosci od uzytkownika na obiekt w ktorym trzymam dane jakie chce
+
+                    info($"Odebrano od {clientName}: \n{jsonMessage}\n");   // pokazuje w texboxie caly json 
+
+                    // deserializacja wiadomosci od uzytkownika na obiekt w ktorym trzymam dane jakie chce trzymac
                     MessagePort message = JsonSerializer.Deserialize<MessagePort>(jsonMessage);
 
                     // akcja serwera wobec wiadomosci
@@ -249,21 +269,22 @@ class ClientHandler
                         info($"message == null");
                         return;
                     }
-                    string sender_action = message.action;              // zeby to bylo poprawnie przypisane wazne zeby messagePort mial get; set;
-
-                    info($"Odebrano od {clientName}: \n{jsonMessage}\n");   // pokazuje w texboxie caly json 
-
-                    bool allow_send_forward_message = actionBetweenUsers(sender_action);
+                    
+                    string sender_action = message.action;          // akcja uzytkownika, zeby to bylo poprawnie przypisane wazne zeby messagePort mial get; set;
 
                     if (sender_action == "requestEncryptedChat") // to jest na potrzeby pokazania projektu
                     {
                         info(" -------------- TUTAJ SIE ZACZYNA DIFFIE HELLMAN --------------");
                     }
-                    if (allow_send_forward_message)                     // tutaj okreslam dozwolone akcje jakie serwer przesyla dalej miedzy uzytkownikami
+
+                    // tutaj okreslam dozwolone akcje jakie serwer przesyla dalej miedzy uzytkownikami
+                    bool allow_send_forward_message = actionBetweenUsers(sender_action);
+
+                    if (allow_send_forward_message)                     
                     {
                         TcpServer.BroadcastMessage(message, this);      // this czyli ClientHandler, przesyla sam siebie
                     }
-                    else if (sender_action == "logout")                 // to jest request od uzytkownika 
+                    else if (sender_action == "logout")                 // to jest request od uzytkownika zeby go wylogowac
                     {
                         messageBuilder.Remove(0, endIndex + 5);
                         client.Close();
@@ -313,6 +334,7 @@ class ClientHandler
     /// dozwolone akcje ktore sa przesylane miedzy klientami np. miedzy klientem a, do klienta b, akcja ktora jest jako action nie dotyczy serwera
     /// a drugiego uzytkownika do ktorego wysylana jest wiadomosc
     /// np. uzytkonik a prosi uzytkownika b o ustanowienie prywatengo czatu
+    /// Ogolnie w akcjach wyjatkiem jest tylko akcja wylogowania uzytkownika, ale jest to obsluzone w peli czytajacej stream powyzej.
     /// </summary>
     /// <param name="action"></param>
     /// <returns></returns>

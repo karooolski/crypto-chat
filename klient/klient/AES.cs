@@ -4,6 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+// Klasa obslugujaca szyfrowanie AES wiadomosci przesylanych na serwer / deszyfrowanie wiadomosci otrzymanej od klienta.  
+// Klasa jest uzywana dopiero po wyznaczniu klucza prywatnego z metody diffie hellman. 
+// Klucz prywany jest konwerowany funkcja skrotu sha256 jako klucz do AES.
+
 namespace klient
 {
     using System;
@@ -25,6 +29,8 @@ namespace klient
         //        Console.WriteLine("Round Trip: {0}", roundtrip);
         //    }
         //}
+
+        // https://learn.microsoft.com/pl-pl/dotnet/api/system.security.cryptography.aes?view=net-8.0
 
         public static byte[] EncryptStringToBytes_Aes(string plainText, byte[] Key, byte[] IV)
         {
@@ -104,18 +110,18 @@ namespace klient
         }
         // https://github.dev/ScutGame/Scut/blob/b30dcfacb9d2bc81e0e81dfd39b970a9af1e6f2a/Source/Middleware/ZyGames.Framework.Game/Context/EncryptionManager.cs#L109#L120
 
-        // uzgadnianie krotszego klczua do AES 
-        static string IVtestgenarator(string key)
+        // uzgadnianie krotszego klczua do AES // IV - initialization vector 
+        static string IVgenarator(string key)
         {
             byte[] ivbyte = GetLegalIV(key);
             string iv = Convert.ToBase64String(ivbyte);
-            Console.WriteLine($"wygenerowany iv: {iv}");
+            //Console.WriteLine($"wygenerowany iv: {iv}");
             return iv;
         }
 
         // uzgadanianie klucza do AES : 
         // czyli przepusc klucz prywatny z diffie hellman (liczba w postaci string) przez SHA256
-        static string uzgodnij_klucz_do_AES(string klucz_prywanty) // Tworzenie klucza symetrycznego (np. z hasła "1234")
+        static string ConvertToSHA256(string klucz_prywanty) // Tworzenie klucza symetrycznego (np. z hasła "1234")
         {
             byte[] key;
             using (var sha256 = SHA256.Create())
@@ -130,8 +136,8 @@ namespace klient
 
         public static string Encrypt(string message, string key)
         {
-            string klucz_do_AES = uzgodnij_klucz_do_AES(key);                       // AES wymaga 2 kluczy symetrycznych
-            string klucz_IV = IVtestgenarator(key);
+            string klucz_do_AES = ConvertToSHA256(key);                       // AES wymaga 2 kluczy symetrycznych
+            string klucz_IV = IVgenarator(key);
             byte[] byte_AES_key = Convert.FromBase64String(klucz_do_AES);           // AES z dokumentacji Microsoftu wymaga kluczy w postaci bajtow,tutaj SHA256 base64 to klucz1
             byte[] byte_IV = Convert.FromBase64String(klucz_IV);
             byte[] encrypted = AES.EncryptStringToBytes_Aes(message, byte_AES_key, byte_IV);
@@ -140,8 +146,8 @@ namespace klient
         }
         public static string Decrypt(string encrypted, string key)
         {
-            string klucz_do_AES = uzgodnij_klucz_do_AES(key);
-            string klucz_IV = IVtestgenarator(key);
+            string klucz_do_AES = ConvertToSHA256(key);
+            string klucz_IV = IVgenarator(key);
             byte[] byte_encrypted = Convert.FromBase64String(encrypted);
             byte[] byte_AES_key = Convert.FromBase64String(klucz_do_AES);
             byte[] byte_IV = Convert.FromBase64String(klucz_IV);

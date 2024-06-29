@@ -3,28 +3,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System;
 using System.Net.Sockets;
-using System.Text;
+//using System.Text;
 using System.Threading;
-using System.IO;
+//using System.IO;
 using System.Windows.Forms;
-using System;
+//using System;
 using System.Text.Json;
-using System.Xml.Linq;
+//using System.Xml.Linq;
 using System.Net;
-using System.Runtime.CompilerServices;
-using System.Windows.Forms.VisualStyles;
-using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Eventing.Reader;
+//using System.Runtime.CompilerServices;
+//using System.Windows.Forms.VisualStyles;
+//using System.Diagnostics.CodeAnalysis;
+//using System.Diagnostics.Eventing.Reader;
 using System.Numerics;
-using System.Xml.Schema;
-using System.Security;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
+//using System.Xml.Schema;
+//using System.Security;
+//using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 using System.Net.NetworkInformation;
-using System.Net.Http;
+//using System.Net.Http;
 
-// Logka klienta
+// Logika klienta
 
 namespace klient
 {
@@ -53,7 +52,7 @@ namespace klient
         static Thread receiveThread = null;
         static string myIP = "0";
         //public static DiffieHellmanData diffieData = null;
-        public static Dictionary<string, DiffieHellmanData> dict = null; // slownik key: "uztykownik", value: "dane do diffie helman"
+        public static Dictionary<string, DiffieHellmanData> dict = null; // slownik key: "uzytkownik", value: "dane do diffie helman"
         public static bool servrBreakup = false;
 
         public TcpClientApp(string clientName, string _ip_, int portAddr, ref RichTextBox textboxAddr,string _myIP)
@@ -151,10 +150,9 @@ namespace klient
                 return;
             }
 
-            dict = new Dictionary<string, DiffieHellmanData>();  // klient ma swoj slownik wraz se swoimi wartosciami oraz innyi ludzmi  
+            dict = new Dictionary<string, DiffieHellmanData>();  // klient ma swoj slownik wraz se swoimi danymi do diffie hellman dla roznych adresatow. 
 
             NetworkStream stream = client.GetStream();
-            
 
             gloabalStream = stream;
             
@@ -163,7 +161,7 @@ namespace klient
 
             try
             {
-                stream.Write(nameData, 0, nameData.Length); // Wysyłanie nazwy klienta na serwer
+                stream.Write(nameData, 0, nameData.Length); // Wyslanie nazwy klienta na serwer
             }
             catch (Exception e)
             {
@@ -211,7 +209,7 @@ namespace klient
 
         /// <summary>
         /// ta funkcja tak strikte dla klienta, jak wysylasz zaszyfrowana wiadomosc to dla ciebie sie pojawia plaintext w texboxie
-        /// a na serwer wysylana jest wiadomosc zaszyfrowana, ktora szyfrowalem w Form2 w akcji przycisku send message
+        /// a na serwer wysylana jest wiadomosc zaszyfrowana, ktora szyfrowalem w Form2 w akcji przycisku send message.
         /// </summary>
         /// <param name="messagePort"></param>
         /// <param name="plainTextMessage"></param>
@@ -259,9 +257,11 @@ namespace klient
             }
         }
 
-
-        // a to jest zrobione na potrzebe gdy klient jest aktywny ale serwer zrestartuje, 
-        // wtedy zanim klient wysle na serwer wiadomosc, to najpierw wysle mu swoj nick 
+        /// <summary>
+        /// a to jest zrobione na potrzebe gdy klient jest aktywny ale serwer zrestartuje, 
+        /// wtedy zanim klient wysle na serwer wiadomosc, to najpierw wysle mu swoj nick -> serwer zainicjalizuje uzytkownika. 
+        /// </summary>
+        /// <param name="myText"></param>
         public static void innerSendMessageTextOnly(string myText)
         {
             byte[] data = Encoding.ASCII.GetBytes(myText);
@@ -549,18 +549,18 @@ namespace klient
                 .FirstOrDefault();
         }
 
-        public static string GetIPV4()
-        {
-            IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
+        //public static string GetIPV4()
+        //{
+        //    IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
 
-            foreach (IPAddress address in ipHostInfo.AddressList)
-            {
-                if (address.AddressFamily == AddressFamily.InterNetwork)
-                    return address.ToString();
-            }
+        //    foreach (IPAddress address in ipHostInfo.AddressList)
+        //    {
+        //        if (address.AddressFamily == AddressFamily.InterNetwork)
+        //            return address.ToString();
+        //    }
 
-            return string.Empty;
-        }
+        //    return string.Empty;
+        //}
 
 
 
@@ -595,6 +595,12 @@ public static string GetIPV4_2()
             }
             return false;
         }
+
+    /// <summary>
+    ///  Metoda sprawdzi czy jestes polaczony z serewerem
+    ///  a jezeli nie to sproboje ciebie polaczyc i zwroci true jezeli sukces. 
+    /// </summary>
+    /// <returns></returns>
     public static bool IsConnected()
         {
             if(client == null)
@@ -632,6 +638,10 @@ public static string GetIPV4_2()
 
         // taki potworek skryptowy, gdy proboje wyslac wiadomosc np. to sprawdzam czy mam polaczenie,
         // jezeli nie to musze utworzyc nowa istnanncje TcpClient i sprobowac sie polaczyc z serwerem ponownie
+        /// <summary>
+        /// Ponowne laczenie sie z serwerem klienta. 
+        /// </summary>
+        /// <returns></returns>
         public static bool tryConnect()
         {
             if (client == null)
@@ -671,11 +681,11 @@ public static string GetIPV4_2()
                 return false;
             }
         }
-        public static bool IsConnected2()
-        {
-            bool networkUp = System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable();
-            return networkUp;
-        }
+        //public static bool IsConnected2()
+        //{
+        //    bool networkUp = System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable();
+        //    return networkUp;
+        //}
 
     }
 }

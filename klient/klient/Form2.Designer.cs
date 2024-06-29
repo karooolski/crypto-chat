@@ -63,7 +63,7 @@
             richTextBox1.Size = new System.Drawing.Size(750, 275);
             richTextBox1.TabIndex = 1;
             richTextBox1.Text = "";
-            richTextBox1.TextChanged += richTextBox1_TextChanged;
+            richTextBox1.TextChanged += infoTextBox_TextChanged;
             // 
             // richTextBox2
             // 
@@ -76,7 +76,7 @@
             richTextBox2.Size = new System.Drawing.Size(222, 130);
             richTextBox2.TabIndex = 2;
             richTextBox2.Text = "";
-            richTextBox2.TextChanged += richTextBox2_TextChanged;
+            richTextBox2.TextChanged += messageTextBox_TextChanged;
             // 
             // button1
             // 
@@ -88,7 +88,7 @@
             button1.TabIndex = 3;
             button1.Text = "send message";
             button1.UseVisualStyleBackColor = true;
-            button1.Click += button1_Click;
+            button1.Click += sendMessageOnButtonClick;
             // 
             // richTextBox3
             // 
@@ -101,7 +101,7 @@
             richTextBox3.Size = new System.Drawing.Size(146, 30);
             richTextBox3.TabIndex = 4;
             richTextBox3.Text = "";
-            richTextBox3.TextChanged += richTextBox3_TextChanged;
+            richTextBox3.TextChanged += adresatTextBox_TextChanged;
             // 
             // richTextBox5
             // 
@@ -126,7 +126,7 @@
             button2.TabIndex = 7;
             button2.Text = "log out";
             button2.UseVisualStyleBackColor = true;
-            button2.Click += button2_Click;
+            button2.Click += logoutBtn_Click;
             // 
             // label2
             // 
@@ -150,7 +150,7 @@
             button3.TabIndex = 9;
             button3.Text = "request crypted chat";
             button3.UseVisualStyleBackColor = true;
-            button3.Click += button3_Click;
+            button3.Click += cryptoChatRequestBtn_Click;
             // 
             // button4
             // 
@@ -162,7 +162,7 @@
             button4.TabIndex = 10;
             button4.Text = "clear";
             button4.UseVisualStyleBackColor = true;
-            button4.Click += button4_Click;
+            button4.Click += clearBtn_Click;
             // 
             // Form2
             // 

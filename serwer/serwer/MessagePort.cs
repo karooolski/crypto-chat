@@ -5,8 +5,15 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
+
 namespace serwer
 {
+    /// <summary>
+    /// To jest klasa ktora sluzy do tworzenia obiektu ktory jest przesylany miedzy klientem a serwerem lub miedzy klientami 
+    /// za posrednictwem serwera. Sam obiekt przed wysylaniem jest serializowany do strigna przez json serializer oraz deserializowany
+    /// po odbiorze wiadomosci zarówno przez klient oraz serwer. 
+    /// MessagePort.cs znajduje sie zatem zarowno w projekcie serwera oraz w projekcie klienta. 
+    /// </summary>
     public class MessagePort
     {
         public string message { get; set; }
@@ -16,26 +23,15 @@ namespace serwer
         public string number { get; set; } // json serializer nie serializuje wartosci zmiennoprzecinkowych, dlatego string zeby wartosci zapisywac jako string i przeslyac klient-serwer
         public string myIP { get; set; }
 
-
-
     public MessagePort()
         {
             message = "None";
             adresat = "None";
             kto_przesyla = "None";
             action = "message";
-            number = "10";
-            myIP = "none77";
+            number = "-999";
+            myIP = "None";
         }
-
-        //public BigInteger getNumber()
-        //{
-        //    try
-        //    {
-        //        return BigInteger.Parse(number);
-        //    }
-        //    catch { return BigInteger.Zero; }
-        //}
 
         public string getNumber()
         {

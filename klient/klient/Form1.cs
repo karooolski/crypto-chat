@@ -24,7 +24,7 @@ namespace klient
             InitializeComponent();
         }
 
-        private bool ValidateContact(string txt)
+        private bool ValidateContact(string txt) // walidacja portu 
         {
             int val;
             if (int.TryParse(txt, out val))
@@ -44,7 +44,8 @@ namespace klient
             return false;
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        // try connect button 
+        private void tryConnectBtn_Click(object sender, EventArgs e)
         {
             if (nick != "")
             {

@@ -1,22 +1,24 @@
-﻿using System;
+﻿//using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+//using System.Linq;
+//using System.Text;
+//using System.Threading.Tasks;
+//using System;
+//using System.Collections.Generic;
+//using System.Linq;
 using System.Numerics;
 
 
-// 2024 06 13 20 37
-// podsatawa tego skryptu jest implementacja algorytmu diffie hemlan,
-// pierw Alice przesyla do Boba liczbe pierwsa p
-// obie strony ustalaja podstawe inaczej zwana g albo inczej "primitive root" czyli prymitywny pierwiastek : g
-// i ten "g" wlasie jest wyznaczany w tym skrypcie
+
 
 namespace klient
 {
+    /// <summary>
+    ///  2024 06 13 20 37
+    ///  podsatawa tej klasy jest implementacja algorytmu diffie hemlan,
+    ///  obie strony ustalaja na jej podstawie, - podstawe, inaczej zwana g albo inczej "primitive root" czyli prymitywny pierwiastek : g
+    ///  i ten "g" wlasnie jest wyznaczany w tej klasie
+    /// </summary>
     class PrimitiveRoot
     {
         //static void Main7()

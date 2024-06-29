@@ -1,14 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
+//using System.Collections.Generic;
+//using System.ComponentModel;
+//using System.Data;
+//using System.Drawing;
+//using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
+//using System.Text;
+//using System.Threading.Tasks;
 using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+//using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace klient
 {
@@ -82,19 +82,21 @@ namespace klient
 
         }
 
-        private void richTextBox1_TextChanged(object sender, EventArgs e)
+        // to jest texbox do wyswietlania wiadomosci twoich i od innch klientow itd. 
+        private void infoTextBox_TextChanged(object sender, EventArgs e)
         {
             richTextBox1.SelectionStart = richTextBox1.Text.Length;
-            // scroll it automatically
-            richTextBox1.ScrollToCaret();
+            
+            richTextBox1.ScrollToCaret(); // automatyczny scroll dla rich textbox
         }
 
-        private void richTextBox2_TextChanged(object sender, EventArgs e)
+        private void messageTextBox_TextChanged(object sender, EventArgs e)
         {
             plainText = richTextBox2.Text;
         }
+
         // send message --------------------------------------------------------------------------
-        private void button1_Click(object sender, EventArgs e)
+        private void sendMessageOnButtonClick(object sender, EventArgs e)
         {
             if (!TcpClientApp.IsConnected())
             {
@@ -138,7 +140,7 @@ namespace klient
                     MessagePort newMessage = new MessagePort(nick, ecnrypted, adresat, myIP);
                     app.sendCryptoMessage(newMessage, plainText);
                 }
-                else // to sie dzieje gdy 1) otrzymales od kogos wiaomosc lub gdy 2) dopiero ustalasz klucz prywatny, masz diffie data ale nie wsztko policzone
+                else // to sie dzieje gdy 1) otrzymales od kogos wiaomosc lub gdy 2) dopiero ustalasz klucz prywatny, masz diffie data ale nie wyznaczyles jeszcze klucza prywatnego.
                 {
                    MessagePort newMessage = new MessagePort(nick, plainText, adresat, myIP);
                    app.sendMessage(newMessage);
@@ -147,7 +149,7 @@ namespace klient
         }
 
         // logout --------------------------------------------
-        private void button2_Click(object sender, EventArgs e)
+        private void logoutBtn_Click(object sender, EventArgs e)
         {
             string message = "action";
             string adresat = "serwer";
@@ -163,7 +165,7 @@ namespace klient
         }
 
         // adresat -------------------------------------------------------
-        private void richTextBox3_TextChanged(object sender, EventArgs e)
+        private void adresatTextBox_TextChanged(object sender, EventArgs e)
         {
             adresat = richTextBox3.Text;
         }
@@ -174,7 +176,7 @@ namespace klient
         }
 
         // request crypted chat -------------------------------
-        private void button3_Click(object sender, EventArgs e)
+        private void cryptoChatRequestBtn_Click(object sender, EventArgs e)
         {
             if (!TcpClientApp.IsConnected())
             {
@@ -216,7 +218,7 @@ namespace klient
 
         }
 
-        private void button4_Click(object sender, EventArgs e)
+        private void clearBtn_Click(object sender, EventArgs e)
         {
             richTextBox1.Clear();
         }

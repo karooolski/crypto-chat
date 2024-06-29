@@ -1,14 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿//using System;
+//using System.Collections.Generic;
+//using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
+//using System.Text;
+//using System.Threading.Tasks;
 
 // skrypt do potegowania wartosci typu BigInteger
+// bo c# ma potegi na double, a ja chce na tym typie miec. 
 
 namespace klient
 {
+    /// <summary>
+    /// Potegowanie ale na zmiennych typu BigInteger
+    /// </summary>
     public class SelfPower {
         public static BigInteger Power(BigInteger a, BigInteger n)
         {

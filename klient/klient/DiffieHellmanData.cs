@@ -1,13 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+//using System.Collections.Generic;
+//using System.Linq;
+//using System.Text;
+//using System.Threading.Tasks;
 using System.Numerics;
-using klient;
+//using klient; https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange
 
 namespace klient
 {
+    /// <summary>
+    /// To jest klasa ktora przechowuje i przetwarza dane potrzebne do metody diffie hellman.
+    /// Kazdy klient ma liste obiketow tej klasy (w TcpClientApp.cs), dzieki temu np. Alice ma z Bobem uzgodniony klucz prywatny, natomiast Alice z Piotrem ma inny klucz prywatny.  
+    /// </summary>
     class DiffieHellmanData
     {
         public string you = "not defined";
@@ -19,37 +23,35 @@ namespace klient
         public BigInteger ABclient2 = 0; // klucz publiczny otrzymuwany od drugiego klienta, z ktorym chce miec czat szyfrowany
         public BigInteger K = 0;  // wspolny tajny klucz K = ABklient2^ab mod p // obaj klienci maja na koniec wyliczony ten sam prywanty klucz którego potem używam jako klucz do SHA256 do AES itd.
 
+        // boole zabezpieczajace robienie operacji uzgadniania klucza po kolei 
         public bool allowCalculate_g = false;
         public bool allowCalculate_ab = false;
         public bool allowCalculateAB = false;
         public static bool allowShareAB = false;
         public bool allowCalculateK = false;
 
-        public bool allowEncryptedChat = false; // ta zmienna jest ustawiana na true dopiero pod koniec procesu uzgadniania klucza obustronnego
+        public bool allowEncryptedChat = false; // ta zmienna jest ustawiana na true dopiero pod koniec procesu uzgadniania klucza prywatnego diffie hellman. 
 
-        //public void show(string kto)
-        //{
-        //    Console.WriteLine($"{kto}: p={p} g={g} ab={ab} AB={AB} ABClient2={ABclient2} K={K}");
-        //}
-
-        //public void show(string kto)
-        //{
-        //    Console.WriteLine($"{kto} wybiera liczbe pierwsza p={p} i uzgadania podstawe g={g}");
-        //    //Console.WriteLine($"{kto}");
-        //    Console.WriteLine($"{kto} wybiera tajna liczbe ab={ab}");
-        //    Console.WriteLine($"{kto} wysyla do kolegi AB=g^ab mod p --> AB = {AB}");
-        //    Console.WriteLine($"{kto} otrzymalo od kolegi ABClient2={ABclient2}");
-        //    Console.WriteLine($"Obliczyl ABkolegi -> ABClient2^ab mod p --> K={K}");
-        //}
-
+        /// <summary>
+        /// Zwraca twoj klucz publiczny. 
+        /// </summary>
+        /// <returns></returns>
         public BigInteger getAB()
         {
             return AB;
         }
+        /// <summary>
+        /// Zwraca twoja podstawe policzona na podstawie poczakowo wyznaczonej liczby pierwszej. 
+        /// </summary>
+        /// <returns></returns>
         public BigInteger get_g()
         {
             return g;
         }
+        /// <summary>
+        /// Zwraca twoj klucz prywatny. 
+        /// </summary>
+        /// <returns></returns>
         public BigInteger getK()
         {
             return K;
@@ -78,7 +80,6 @@ namespace klient
             {
                 g = PrimitiveRoot.FindPrimitiveRoot(p);
                 allowCalculate_ab = true;
-
             }
         }
 
@@ -124,11 +125,10 @@ namespace klient
         /// <summary>
         /// Obliczam swoj klucz prywanty. 
         /// </summary>
-        public void calculateK()
+        public void calculateK() // K = ABklient2 ^ ab mod p --> czyli (klucz_publiczny_klienta_2)^(twoja_losowa_liczba) mod (liczba_pierwsza) 
         {
             if (allowCalculateK && allowCalculate_g && allowCalculateAB) // te 2 zmienne na koncu sa ustawiane jak sie wylicza p i ab 
             {
-                // K = ABklient2 ^ ab mod p
                 BigInteger czlon1 = SelfPower.Power(ABclient2, ab);
                 K = czlon1 % p;
             }

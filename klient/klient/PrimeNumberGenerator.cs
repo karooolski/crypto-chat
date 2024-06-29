@@ -1,10 +1,10 @@
 ﻿using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
-using System.Linq;
+//using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
+//using System.Text;
+//using System.Threading.Tasks;
 
 // skrypt zrbiony na potrzeby metody diffie hellman
 // losowanie liczby pierwszej 
